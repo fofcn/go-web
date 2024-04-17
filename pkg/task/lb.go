@@ -1,0 +1,112 @@
+package task
+
+import (
+	"errors"
+	"reflect"
+	"sync"
+)
+
+type LoadBalancer interface {
+	Select() Worker
+	AddWorker(worker Worker)
+	DelWorker(worker Worker)
+}
+
+type rr struct {
+	idx     int
+	workers []Worker
+	mux     sync.Mutex
+}
+
+type workerweight struct {
+	worker Worker
+	weight int
+}
+
+type weight struct {
+	idx     int
+	workers []workerweight
+	mux     sync.Mutex
+}
+
+var (
+	lbRegistry = map[string]reflect.Type{
+		"rr":  reflect.TypeOf(rr{}),
+		"wrr": reflect.TypeOf(weight{}),
+	}
+)
+
+func NewLB(name string) (LoadBalancer, error) {
+	alg, ok := lbRegistry[name]
+	if !ok {
+		return nil, errors.New("unsupported load balancer algorithm")
+	}
+
+	return reflect.New(alg).Elem().Addr().Interface().(LoadBalancer), nil
+}
+
+func (r *rr) Select() Worker {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+
+	if len(r.workers) == 0 {
+		return nil // 没有可用工作者
+	}
+
+	worker := r.workers[r.idx]
+	r.idx = (r.idx + 1) % len(r.workers)
+	return worker
+}
+
+func (r *rr) AddWorker(worker Worker) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+
+	r.workers = append(r.workers, worker)
+}
+
+func (r *rr) DelWorker(worker Worker) {
+	r.mux.Lock()
+	defer r.mux.Unlock()
+
+	for i, w := range r.workers {
+		if w.GetId() == worker.GetId() {
+			r.workers = append(r.workers[:i], r.workers[i+1:]...)
+			break
+		}
+	}
+}
+
+func (w *weight) Select() Worker {
+	w.mux.Lock()
+	defer w.mux.Unlock()
+
+	if len(w.workers) == 0 {
+		return nil // 没有可用工作者
+	}
+
+	// 这里只是简单的选择下一个工作者，而没有按权重进行选择
+	// 后面再改
+	worker := w.workers[w.idx].worker
+	w.idx = (w.idx + 1) % len(w.workers)
+	return worker
+}
+
+func (w *weight) AddWorker(worker Worker) {
+	w.mux.Lock()
+	defer w.mux.Unlock()
+
+	w.workers = append(w.workers, workerweight{worker: worker, weight: 1})
+}
+
+func (w *weight) DelWorker(worker Worker) {
+	w.mux.Lock()
+	defer w.mux.Unlock()
+
+	for i, ww := range w.workers {
+		if ww.worker.GetId() == worker.GetId() {
+			w.workers = append(w.workers[:i], w.workers[i+1:]...)
+			break
+		}
+	}
+}
