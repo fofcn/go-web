@@ -73,6 +73,7 @@ func NewTask(t TaskType, userdef interface{}) Task {
 		taskType:  t,
 		createdAt: time.Now(),
 		priority:  TaskPriorityLow,
+		userdef:   userdef,
 	}
 }
 
