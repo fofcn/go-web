@@ -21,3 +21,23 @@ go build cmd/goweb.go
 
 ## 工程结构
 `Feature-based`工程结构。
+
+# 任务状态转移图
+![](./docs/uml/task-state-transition.png)
+```xml
+
+@startuml
+
+[*] --> Created: Task created
+Created --> Running: Start task
+Running --> Done: Task completed
+Running --> Cancelled: Task cancelled
+Running --> Failure: Task failed
+Created --> Cancelled: Task cancelled before started
+Done --> [*]
+Cancelled --> [*]
+Failure --> [*]
+
+@enduml
+
+```

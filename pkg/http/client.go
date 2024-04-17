@@ -52,6 +52,9 @@ func (c *CustomHTTPClient) doRequest(method, url string, body io.Reader, headers
 		return nil, 0, err
 	}
 
+	if headers == nil {
+		headers = make(map[string]string)
+	}
 	// Set request headers if any
 	for key, value := range headers {
 		req.Header.Set(key, value)

@@ -10,7 +10,8 @@ type Scheduler interface {
 	Stop() error
 	Schedule(task Task) (TaskFuture, error)
 	RegisterWorker(worker Worker) error
-	DeRegisterWorker(worker Worker) error
+	DeRegisterWorker(id WorkerId) error
+	GetWorkers() []Worker
 	HandleTaskCompletion(worker Worker, task Task, err error)
 }
 
@@ -62,9 +63,13 @@ func (s *defaultScheduler) RegisterWorker(worker Worker) error {
 	return nil
 }
 
-func (s *defaultScheduler) DeRegisterWorker(worker Worker) error {
-	s.workerlb.DelWorker(worker)
+func (s *defaultScheduler) DeRegisterWorker(id WorkerId) error {
+	s.workerlb.DelWorker(id)
 	return nil
+}
+
+func (s *defaultScheduler) GetWorkers() []Worker {
+	return s.workerlb.GetWorkers()
 }
 
 func (s *defaultScheduler) HandleTaskCompletion(worker Worker, task Task, err error) {

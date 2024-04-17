@@ -9,7 +9,8 @@ import (
 type LoadBalancer interface {
 	Select() Worker
 	AddWorker(worker Worker)
-	DelWorker(worker Worker)
+	DelWorker(id WorkerId)
+	GetWorkers() []Worker
 }
 
 type rr struct {
@@ -62,19 +63,28 @@ func (r *rr) AddWorker(worker Worker) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 
+	for _, w := range r.workers {
+		if w.GetAddr() == worker.GetAddr() {
+			return
+		}
+	}
 	r.workers = append(r.workers, worker)
 }
 
-func (r *rr) DelWorker(worker Worker) {
+func (r *rr) DelWorker(id WorkerId) {
 	r.mux.Lock()
 	defer r.mux.Unlock()
 
 	for i, w := range r.workers {
-		if w.GetId() == worker.GetId() {
+		if w.GetId() == id {
 			r.workers = append(r.workers[:i], r.workers[i+1:]...)
 			break
 		}
 	}
+}
+
+func (r *rr) GetWorkers() []Worker {
+	return r.workers
 }
 
 func (w *weight) Select() Worker {
@@ -99,14 +109,26 @@ func (w *weight) AddWorker(worker Worker) {
 	w.workers = append(w.workers, workerweight{worker: worker, weight: 1})
 }
 
-func (w *weight) DelWorker(worker Worker) {
+func (w *weight) DelWorker(id WorkerId) {
 	w.mux.Lock()
 	defer w.mux.Unlock()
 
 	for i, ww := range w.workers {
-		if ww.worker.GetId() == worker.GetId() {
+		if ww.worker.GetId() == id {
 			w.workers = append(w.workers[:i], w.workers[i+1:]...)
 			break
 		}
 	}
+}
+
+func (w *weight) GetWorkers() []Worker {
+	w.mux.Lock()
+	defer w.mux.Unlock()
+
+	workers := make([]Worker, len(w.workers))
+	for _, ww := range w.workers {
+		workers = append(workers, ww.worker)
+	}
+
+	return workers
 }

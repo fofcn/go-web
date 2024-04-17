@@ -1,7 +1,6 @@
 package task
 
 import (
-	"go-web/pkg/http"
 	"sync/atomic"
 	"time"
 )
@@ -13,6 +12,7 @@ const (
 	TaskStateRunning
 	TaskStateDone
 	TaskStateCancelled
+	TaskStateFailure
 )
 
 type TaskType int
@@ -37,7 +37,6 @@ type Task interface {
 	GetType() TaskType
 	GetCreatedAt() time.Time
 	GetPriority() TaskPriority
-	Run() error
 }
 
 type TaskFuture interface {
@@ -48,12 +47,12 @@ type TaskFuture interface {
 }
 
 type taskimpl struct {
-	id         int
-	state      TaskState
-	taskType   TaskType
-	createdAt  time.Time
-	priority   TaskPriority
-	httpclient http.HTTPClient
+	id        int
+	state     TaskState
+	taskType  TaskType
+	createdAt time.Time
+	priority  TaskPriority
+	userdef   interface{}
 }
 
 type taskfutureimpl struct {
@@ -67,19 +66,23 @@ var (
 	taskIdAssigner = atomic.Int32{}
 )
 
-func NewTask(t TaskType) Task {
+func NewTask(t TaskType, userdef interface{}) Task {
 	return &taskimpl{
-		id:         int(taskIdAssigner.Add(1)),
-		state:      TaskStateCreated,
-		taskType:   t,
-		createdAt:  time.Now(),
-		priority:   TaskPriorityLow,
-		httpclient: http.NewCustomHTTPClient(),
+		id:        int(taskIdAssigner.Add(1)),
+		state:     TaskStateCreated,
+		taskType:  t,
+		createdAt: time.Now(),
+		priority:  TaskPriorityLow,
 	}
 }
 
-func NewTaskFuture() TaskFuture {
-	return &taskfutureimpl{}
+func NewTaskFuture(task Task) TaskFuture {
+	return &taskfutureimpl{
+		task:   task,
+		done:   false,
+		cancel: false,
+		err:    nil,
+	}
 }
 
 func (t *taskimpl) GetId() int {
@@ -100,10 +103,6 @@ func (t *taskimpl) GetCreatedAt() time.Time {
 
 func (t *taskimpl) GetPriority() TaskPriority {
 	return t.priority
-}
-
-func (t *taskimpl) Run() error {
-	return nil
 }
 
 func (t *taskfutureimpl) GetTask() Task {

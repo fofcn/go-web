@@ -5,6 +5,7 @@ import (
 	"go-web/index"
 	"go-web/pkg/config"
 	"go-web/pkg/router"
+	"go-web/schedule"
 	"log"
 	"net/http"
 	"os"
@@ -67,6 +68,7 @@ func prepareServer() *http.Server {
 
 	public := r.Group("/")
 	index.InitRouter(public)
+	schedule.InitRouter(public)
 
 	return server
 }
