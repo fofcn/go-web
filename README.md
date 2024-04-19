@@ -41,3 +41,13 @@ Failure --> [*]
 @enduml
 
 ```
+
+# worker管理
+worker由worker manager管理并存储。Scheduler定时pingworker，worker manager根据ping结果更新worker状态。Worker状态unhealthy时，worker manager会删除worker。
+
+# task 管理
+task 由task manager管理，task manager根据worker状态分配task。scheduler从task manager获取task，并分配给worker（Pull model）。
+
+# Task状态存储与管理
+Task与Task状态由Task Store存储， Task Store V1版本使用内存存储，Task Store V2版本使用redis存储。Task使用本地存储以后，进行分布式扩展时会出现问题，所以目前只支持单机版本。
+V2使用Redis cluster存储后无此问题。V2可以考虑将状态存储到非Redis的存储中，如MySQL。

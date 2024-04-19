@@ -112,13 +112,20 @@ type WorkerManager struct {
 
 func NewWorkerManager(lbAlg string) *WorkerManager {
 	lb, _ := NewLB(lbAlg)
-	return &WorkerManager{
+	ww := &WorkerManager{
 		lb:          lb,
 		workers:     &sync.Map{},
 		timer:       time.NewTicker(5 * time.Second),
 		healthTimer: time.NewTicker(5 * time.Second),
 		done:        make(chan bool),
 	}
+
+	go func() {
+		ww.healthCheck()
+		ww.evictWorker()
+	}()
+
+	return ww
 }
 
 func (ww *WorkerManager) AddWorker(worker Worker) {
