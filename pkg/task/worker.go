@@ -164,7 +164,12 @@ func (ww *WorkerManager) healthCheck() {
 		case <-ww.healthTimer.C:
 			ww.workers.Range(func(key, value any) bool {
 				worker := value.(Worker)
-				worker.CheckStatus()
+				err := worker.CheckStatus()
+				if err != nil {
+					if worker.IncrErrorCount() >= 3 {
+						ww.DelWorker(worker.GetId())
+					}
+				}
 				return true
 			})
 		}
@@ -179,7 +184,7 @@ func (ww *WorkerManager) evictWorker() {
 		case <-ww.timer.C:
 			ww.workers.Range(func(key, value any) bool {
 				worker := value.(Worker)
-				if worker.Status().IsHealthy == false {
+				if !worker.Status().IsHealthy {
 					ww.DelWorker(worker.GetId())
 				}
 				return true
