@@ -17,9 +17,13 @@ type Scheduler interface {
 }
 
 type defaultScheduler struct {
-	workerlb LoadBalancer
-	started  atomic.Bool
+	wm      *WorkerManager
+	started atomic.Bool
 }
+
+const (
+	defaultLBAlg = "rr"
+)
 
 var (
 	scheduler Scheduler
@@ -28,20 +32,15 @@ var (
 
 func GetScheduler() Scheduler {
 	once.Do(func() {
-		scheduler, _ = NewScheduler()
+		scheduler, _ = NewScheduler(defaultLBAlg)
 	})
 
 	return scheduler
 }
 
-func NewScheduler() (Scheduler, error) {
-	workerlb, err := NewLB("rr")
-	if err != nil {
-		return nil, err
-	}
-
+func NewScheduler(lbAlg string) (Scheduler, error) {
 	return &defaultScheduler{
-		workerlb: workerlb,
+		wm: NewWorkerManager(lbAlg),
 	}, nil
 }
 
@@ -60,7 +59,7 @@ func (s *defaultScheduler) Stop() error {
 }
 
 func (s *defaultScheduler) Schedule(task Task) (TaskFuture, error) {
-	w := s.workerlb.Select()
+	w := s.wm.SelectWorker()
 	if w == nil {
 		return nil, errors.New("no worker available")
 	}
@@ -73,17 +72,17 @@ func (s *defaultScheduler) Schedule(task Task) (TaskFuture, error) {
 }
 
 func (s *defaultScheduler) RegisterWorker(worker Worker) error {
-	s.workerlb.AddWorker(worker)
+	s.wm.AddWorker(worker)
 	return nil
 }
 
 func (s *defaultScheduler) DeRegisterWorker(id WorkerId) error {
-	s.workerlb.DelWorker(id)
+	s.wm.DelWorker(id)
 	return nil
 }
 
 func (s *defaultScheduler) GetWorkers() []Worker {
-	return s.workerlb.GetWorkers()
+	return s.wm.GetWorkers()
 }
 
 func (s *defaultScheduler) HandleTaskCompletion(worker Worker, task Task, err error) {

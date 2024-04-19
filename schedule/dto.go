@@ -1,6 +1,6 @@
 package schedule
 
 type WorkerListDto struct {
-	Id   int    `json:"id"`
+	Id   string `json:"id"`
 	Addr string `json:"addr"`
 }

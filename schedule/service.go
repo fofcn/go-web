@@ -3,9 +3,9 @@ package schedule
 import "go-web/pkg/task"
 
 type ScheduleService interface {
-	RegisterWorker(addr string) error
+	RegisterWorker(workerId task.WorkerId, addr string) error
 	GetWorkerList() []*WorkerListDto
-	DeRegisterWorker(id int) error
+	DeRegisterWorker(id string) error
 }
 
 type scheduleimpl struct {
@@ -19,8 +19,8 @@ func NewScheduleService() ScheduleService {
 	}
 }
 
-func (s *scheduleimpl) RegisterWorker(addr string) error {
-	_ = s.scheduler.RegisterWorker(task.NewWorker(addr))
+func (s *scheduleimpl) RegisterWorker(workerId task.WorkerId, addr string) error {
+	_ = s.scheduler.RegisterWorker(task.NewWorker(workerId, addr))
 	return nil
 }
 
@@ -29,7 +29,7 @@ func (s *scheduleimpl) GetWorkerList() []*WorkerListDto {
 	workerdtos := make([]*WorkerListDto, len(workers))
 	for i, worker := range workers {
 		workerdtos[i] = &WorkerListDto{
-			Id:   int(worker.GetId()),
+			Id:   string(worker.GetId()),
 			Addr: worker.GetAddr(),
 		}
 	}
@@ -37,7 +37,7 @@ func (s *scheduleimpl) GetWorkerList() []*WorkerListDto {
 	return workerdtos
 }
 
-func (s *scheduleimpl) DeRegisterWorker(id int) error {
+func (s *scheduleimpl) DeRegisterWorker(id string) error {
 	_ = s.scheduler.DeRegisterWorker(task.WorkerId(id))
 	return nil
 }

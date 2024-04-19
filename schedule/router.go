@@ -1,7 +1,7 @@
 package schedule
 
 import (
-	"strconv"
+	"go-web/pkg/task"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +33,7 @@ func (sr *ScheduleRouter) RegisterWorker(c *gin.Context) {
 		return
 	}
 
-	_ = sr.ss.RegisterWorker(cmd.Addr)
+	_ = sr.ss.RegisterWorker(task.WorkerId(cmd.Id), cmd.Addr)
 
 	c.JSON(200, gin.H{
 		"message": "ok",
@@ -49,14 +49,13 @@ func (sr *ScheduleRouter) GetWorkerList(c *gin.Context) {
 
 func (sr *ScheduleRouter) DelWorker(c *gin.Context) {
 	id := c.Param("id")
-	idi, err := strconv.Atoi(id)
-	if err != nil {
+	if len(id) == 0 {
 		c.JSON(400, gin.H{
 			"message": "Invalid id",
 		})
 		return
 	}
-	_ = sr.ss.DeRegisterWorker(idi)
+	_ = sr.ss.DeRegisterWorker(id)
 	c.JSON(200, gin.H{
 		"message": "ok",
 	})
