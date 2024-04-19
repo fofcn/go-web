@@ -10,9 +10,19 @@ import (
 
 type WorkerStatus struct {
 	IsHealthy      bool
-	ActiveTasks    int
-	CompletedTasks int
-	FailedTasks    int
+	ActiveTasks    int `json:"active_tasks"`
+	CompletedTasks int `json:"completed_tasks"`
+	FailedTasks    int `json:"failed_tasks"`
+	CancelledTasks int `json:"cancelled_tasks"`
+}
+
+func (ws WorkerStatus) String() string {
+	return "WorkerStatus{" +
+		", ActiveTasks:" + string(ws.ActiveTasks) +
+		", CompletedTasks:" + string(ws.CompletedTasks) +
+		", FailedTasks:" + string(ws.FailedTasks) +
+		", CancelledTasks:" + string(ws.CancelledTasks) +
+		"}"
 }
 
 type WorkerId string
@@ -32,19 +42,23 @@ type workimpl struct {
 	httpclient   http.HTTPClient
 	taskapitable map[TaskType]string
 	errCounter   atomic.Int32
+	isHealty     atomic.Bool
 }
 
 func NewWorker(id WorkerId, addr string) Worker {
 	table := map[TaskType]string{
-		TaskTypeB:           "/task/b",
 		TaskTypeCSVSplitter: "/task",
 	}
-	return &workimpl{
+
+	worker := &workimpl{
 		id:           id,
 		addr:         addr,
 		httpclient:   http.NewCustomHTTPClient(),
 		taskapitable: table,
+		isHealty:     atomic.Bool{},
 	}
+	worker.isHealty.Store(true)
+	return worker
 }
 
 func (w *workimpl) GetId() WorkerId {
@@ -94,8 +108,8 @@ type statuscheckdto struct {
 }
 
 func (w *workimpl) CheckStatus() error {
-	resp, status, err := w.httpclient.Get("http://"+w.addr+"/status", nil)
-	if status == 200 || err == nil {
+	resp, status, err := w.httpclient.Get("http://"+w.addr+"/executor/status", nil)
+	if status == 200 && err == nil {
 		statusdto := &statuscheckdto{}
 		err := json.Unmarshal(resp, statusdto)
 		if err != nil {
@@ -104,7 +118,7 @@ func (w *workimpl) CheckStatus() error {
 
 		return nil
 	}
-	return err
+	return errors.New("check status error")
 }
 
 func (w *workimpl) GetAddr() string {

@@ -45,6 +45,7 @@ func NewScheduler(lbAlg string) (*Scheduler, error) {
 
 	return &Scheduler{
 		started:  atomic.Bool{},
+		wm:       wm,
 		executor: executor,
 	}, nil
 }

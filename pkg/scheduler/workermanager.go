@@ -23,7 +23,6 @@ func NewWorkerManager(lb LoadBalancer) *WorkerManager {
 	}
 
 	go func() {
-		ww.healthCheck()
 		ww.evictWorker()
 	}()
 
@@ -57,13 +56,13 @@ func (ww *WorkerManager) Close() {
 	ww.healthTimer.Stop()
 	ww.done <- true
 }
-
-func (ww *WorkerManager) healthCheck() {
+func (ww *WorkerManager) evictWorker() {
 	for {
 		select {
 		case <-ww.done:
 			return
 		case <-ww.healthTimer.C:
+			println("health check timer")
 			ww.workers.Range(func(key, value any) bool {
 				worker := value.(Worker)
 				err := worker.CheckStatus()
@@ -71,23 +70,8 @@ func (ww *WorkerManager) healthCheck() {
 					if worker.IncrErrorCounter() >= 3 {
 						ww.DelWorker(worker.GetId())
 					}
-				}
-				return true
-			})
-		}
-	}
-}
-
-func (ww *WorkerManager) evictWorker() {
-	for {
-		select {
-		case <-ww.done:
-			return
-		case <-ww.timer.C:
-			ww.workers.Range(func(key, value any) bool {
-				worker := value.(Worker)
-				if !worker.Status().IsHealthy {
-					ww.DelWorker(worker.GetId())
+				} else {
+					println(worker.Status().String())
 				}
 				return true
 			})
