@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go-web/pkg/http"
 	"sync/atomic"
 )
@@ -17,12 +18,7 @@ type WorkerStatus struct {
 }
 
 func (ws WorkerStatus) String() string {
-	return "WorkerStatus{" +
-		", ActiveTasks:" + string(ws.ActiveTasks) +
-		", CompletedTasks:" + string(ws.CompletedTasks) +
-		", FailedTasks:" + string(ws.FailedTasks) +
-		", CancelledTasks:" + string(ws.CancelledTasks) +
-		"}"
+	return fmt.Sprintf("WorkerStatus{ , ActiveTasks: %d, CompletedTasks: %d , FailedTasks: %d , CancelledTasks: %d}", ws.ActiveTasks, ws.CompletedTasks, ws.FailedTasks, ws.CancelledTasks)
 }
 
 type WorkerId string
@@ -43,6 +39,7 @@ type workimpl struct {
 	taskapitable map[TaskType]string
 	errCounter   atomic.Int32
 	isHealty     atomic.Bool
+	workerStatus *WorkerStatus
 }
 
 func NewWorker(id WorkerId, addr string) Worker {
@@ -56,6 +53,7 @@ func NewWorker(id WorkerId, addr string) Worker {
 		httpclient:   http.NewCustomHTTPClient(),
 		taskapitable: table,
 		isHealty:     atomic.Bool{},
+		workerStatus: &WorkerStatus{},
 	}
 	worker.isHealty.Store(true)
 	return worker
@@ -90,7 +88,7 @@ func (w *workimpl) Exec(task Task) (TaskFuture, error) {
 }
 
 func (w *workimpl) Status() WorkerStatus {
-	return WorkerStatus{}
+	return *w.workerStatus
 }
 
 func (w *workimpl) IncrErrorCounter() int32 {
@@ -100,21 +98,31 @@ func (w *workimpl) ResetErrorCounter() {
 	w.errCounter.Store(0)
 }
 
-type statuscheckdto struct {
+type ExecutorStatusDto struct {
+	Data StatusCheckDto `json:"data"`
+}
+
+type StatusCheckDto struct {
 	IsHealthy      bool `json:"is_healthy"`
 	ActiveTasks    int  `json:"active_tasks"`
 	CompletedTasks int  `json:"completed_tasks"`
 	FailedTasks    int  `json:"failed_tasks"`
+	CancelledTasks int  `json:"cancelled_tasks"`
 }
 
 func (w *workimpl) CheckStatus() error {
 	resp, status, err := w.httpclient.Get("http://"+w.addr+"/executor/status", nil)
 	if status == 200 && err == nil {
-		statusdto := &statuscheckdto{}
-		err := json.Unmarshal(resp, statusdto)
+		executorStatus := &ExecutorStatusDto{}
+		err := json.Unmarshal(resp, executorStatus)
 		if err != nil {
 			return err
 		}
+
+		w.workerStatus.ActiveTasks = executorStatus.Data.ActiveTasks
+		w.workerStatus.CompletedTasks = executorStatus.Data.CompletedTasks
+		w.workerStatus.FailedTasks = executorStatus.Data.FailedTasks
+		w.workerStatus.CancelledTasks = executorStatus.Data.CancelledTasks
 
 		return nil
 	}
