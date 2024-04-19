@@ -18,7 +18,7 @@ const (
 type TaskType int
 
 const (
-	TaskTypeA TaskType = iota
+	TaskTypeCSVSplitter TaskType = iota
 	TaskTypeB
 	TaskTypeC
 )
@@ -37,6 +37,7 @@ type Task interface {
 	GetType() TaskType
 	GetCreatedAt() time.Time
 	GetPriority() TaskPriority
+	GetUserDef() interface{}
 }
 
 type TaskFuture interface {
@@ -104,6 +105,10 @@ func (t *taskimpl) GetCreatedAt() time.Time {
 
 func (t *taskimpl) GetPriority() TaskPriority {
 	return t.priority
+}
+
+func (t *taskimpl) GetUserDef() interface{} {
+	return t.userdef
 }
 
 func (t *taskfutureimpl) GetTask() Task {

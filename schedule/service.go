@@ -13,7 +13,7 @@ type scheduleimpl struct {
 }
 
 func NewScheduleService() ScheduleService {
-	scheduler, _ := task.NewScheduler()
+	scheduler := task.GetScheduler()
 	return &scheduleimpl{
 		scheduler: scheduler,
 	}
@@ -27,11 +27,11 @@ func (s *scheduleimpl) RegisterWorker(addr string) error {
 func (s *scheduleimpl) GetWorkerList() []*WorkerListDto {
 	workers := s.scheduler.GetWorkers()
 	workerdtos := make([]*WorkerListDto, len(workers))
-	for _, worker := range workers {
-		workerdtos = append(workerdtos, &WorkerListDto{
+	for i, worker := range workers {
+		workerdtos[i] = &WorkerListDto{
 			Id:   int(worker.GetId()),
 			Addr: worker.GetAddr(),
-		})
+		}
 	}
 
 	return workerdtos

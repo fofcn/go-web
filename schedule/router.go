@@ -41,8 +41,9 @@ func (sr *ScheduleRouter) RegisterWorker(c *gin.Context) {
 }
 
 func (sr *ScheduleRouter) GetWorkerList(c *gin.Context) {
+	dtos := sr.ss.GetWorkerList()
 	c.JSON(200, gin.H{
-		"workers": sr.ss.GetWorkerList(),
+		"workers": dtos,
 	})
 }
 
@@ -59,4 +60,12 @@ func (sr *ScheduleRouter) DelWorker(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "ok",
 	})
+}
+
+type csvsplittask struct {
+	FilePath string `json:"filepath"`
+}
+
+func (sr *ScheduleRouter) submitTask(c *gin.Context) {
+
 }

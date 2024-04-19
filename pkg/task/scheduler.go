@@ -2,6 +2,7 @@ package task
 
 import (
 	"errors"
+	"sync"
 	"sync/atomic"
 )
 
@@ -18,6 +19,19 @@ type Scheduler interface {
 type defaultScheduler struct {
 	workerlb LoadBalancer
 	started  atomic.Bool
+}
+
+var (
+	scheduler Scheduler
+	once      sync.Once
+)
+
+func GetScheduler() Scheduler {
+	once.Do(func() {
+		scheduler, _ = NewScheduler()
+	})
+
+	return scheduler
 }
 
 func NewScheduler() (Scheduler, error) {

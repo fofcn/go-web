@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"go-web/file"
 	"go-web/index"
 	"go-web/pkg/config"
 	"go-web/pkg/router"
@@ -69,6 +70,7 @@ func prepareServer() *http.Server {
 	public := r.Group("/")
 	index.InitRouter(public)
 	schedule.InitRouter(public)
+	file.InitRouter(public)
 
 	return server
 }

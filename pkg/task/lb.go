@@ -2,7 +2,6 @@ package task
 
 import (
 	"errors"
-	"reflect"
 	"sync"
 )
 
@@ -31,9 +30,9 @@ type weight struct {
 }
 
 var (
-	lbRegistry = map[string]reflect.Type{
-		"rr":  reflect.TypeOf(rr{}),
-		"wrr": reflect.TypeOf(weight{}),
+	lbRegistry = map[string]LoadBalancer{
+		"rr":  &rr{},
+		"wrr": &weight{},
 	}
 )
 
@@ -43,7 +42,7 @@ func NewLB(name string) (LoadBalancer, error) {
 		return nil, errors.New("unsupported load balancer algorithm")
 	}
 
-	return reflect.New(alg).Elem().Addr().Interface().(LoadBalancer), nil
+	return alg, nil
 }
 
 func (r *rr) Select() Worker {
