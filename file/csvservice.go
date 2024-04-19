@@ -1,13 +1,13 @@
 package file
 
-import "go-web/pkg/task"
+import "go-web/pkg/scheduler"
 
 type CsvService interface {
 	SplitCsv(filepath string) error
 }
 
 type csvservice struct {
-	scheduler task.Scheduler
+	scheduler *scheduler.Scheduler
 }
 
 type CsvSplitTask struct {
@@ -17,12 +17,12 @@ type CsvSplitTask struct {
 
 func NewCsvService() CsvService {
 	return &csvservice{
-		scheduler: task.GetScheduler(),
+		scheduler: scheduler.GetScheduler("rr"),
 	}
 }
 
 func (c *csvservice) SplitCsv(filepath string) error {
-	task := task.NewTask(task.TaskTypeCSVSplitter, CsvSplitTask{FilePath: filepath, TaskType: "1"})
+	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, CsvSplitTask{FilePath: filepath, TaskType: "1"})
 	_, err := c.scheduler.Schedule(task)
 	return err
 }

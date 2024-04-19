@@ -1,4 +1,4 @@
-package task
+package scheduler
 
 type TaskStore interface {
 	AddTask(task Task) error
@@ -11,7 +11,7 @@ type InMemStore struct {
 }
 
 // 与InMemStore类似，只是存储在redis中，需要引入redis包
-// 目前暂时不介入Redis,所以与InMemStore实现一样
+// 目前暂时不接入Redis,所以与InMemStore实现一样
 type RedisStore struct {
 	tasks map[int]Task
 }

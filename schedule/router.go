@@ -1,7 +1,7 @@
 package schedule
 
 import (
-	"go-web/pkg/task"
+	"go-web/pkg/scheduler"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +33,7 @@ func (sr *ScheduleRouter) RegisterWorker(c *gin.Context) {
 		return
 	}
 
-	_ = sr.ss.RegisterWorker(task.WorkerId(cmd.Id), cmd.Addr)
+	_ = sr.ss.RegisterWorker(scheduler.WorkerId(cmd.Id), cmd.Addr)
 
 	c.JSON(200, gin.H{
 		"message": "ok",

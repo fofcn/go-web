@@ -1,8 +1,8 @@
-package task_test
+package scheduler_test
 
 import (
 	"encoding/json"
-	"go-web/pkg/task"
+	"go-web/pkg/scheduler"
 	"testing"
 )
 
@@ -12,7 +12,7 @@ type userdeftask struct {
 }
 
 func TestNewTask_ShouldSuccess_WhenGivenValidInput(t *testing.T) {
-	task := task.NewTask(task.TaskTypeCSVSplitter, &userdeftask{
+	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, &userdeftask{
 		path: "/test",
 		name: "test",
 	})

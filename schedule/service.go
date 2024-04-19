@@ -1,26 +1,28 @@
 package schedule
 
-import "go-web/pkg/task"
+import (
+	"go-web/pkg/scheduler"
+)
 
 type ScheduleService interface {
-	RegisterWorker(workerId task.WorkerId, addr string) error
+	RegisterWorker(workerId scheduler.WorkerId, addr string) error
 	GetWorkerList() []*WorkerListDto
 	DeRegisterWorker(id string) error
 }
 
 type scheduleimpl struct {
-	scheduler task.Scheduler
+	scheduler *scheduler.Scheduler
 }
 
 func NewScheduleService() ScheduleService {
-	scheduler := task.GetScheduler()
+	scheduler := scheduler.GetScheduler("rr")
 	return &scheduleimpl{
 		scheduler: scheduler,
 	}
 }
 
-func (s *scheduleimpl) RegisterWorker(workerId task.WorkerId, addr string) error {
-	_ = s.scheduler.RegisterWorker(task.NewWorker(workerId, addr))
+func (s *scheduleimpl) RegisterWorker(workerId scheduler.WorkerId, addr string) error {
+	_ = s.scheduler.RegisterWorker(scheduler.NewWorker(workerId, addr))
 	return nil
 }
 
@@ -38,6 +40,6 @@ func (s *scheduleimpl) GetWorkerList() []*WorkerListDto {
 }
 
 func (s *scheduleimpl) DeRegisterWorker(id string) error {
-	_ = s.scheduler.DeRegisterWorker(task.WorkerId(id))
+	_ = s.scheduler.DeRegisterWorker(scheduler.WorkerId(id))
 	return nil
 }
