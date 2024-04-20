@@ -75,13 +75,14 @@ func (w *workimpl) Exec(task Task) (TaskFuture, error) {
 		headers := map[string]string{
 			"Content-Type": "application/json",
 		}
-		resp, status, err := w.httpclient.Post("http://"+w.addr+taskapi, bytes.NewReader(taskjson), headers)
-		if status == 200 || err == nil {
+		url := fmt.Sprintf("http://%s%s/%d", w.addr, taskapi, task.GetId())
+		resp, status, err := w.httpclient.Post(url, bytes.NewReader(taskjson), headers)
+		if status == 200 && err == nil {
 			println(string(resp))
 			json.Unmarshal(resp, task)
 			return NewTaskFuture(task), nil
 		} else {
-			return nil, err
+			return nil, errors.New("dispath task error")
 		}
 	}
 	return nil, errors.New("no api found")

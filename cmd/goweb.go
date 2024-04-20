@@ -4,6 +4,7 @@ import (
 	"context"
 	"go-web/file"
 	"go-web/index"
+	"go-web/pdf"
 	"go-web/pkg/config"
 	"go-web/pkg/router"
 	"go-web/schedule"
@@ -71,6 +72,7 @@ func prepareServer() *http.Server {
 	index.InitRouter(public)
 	schedule.InitRouter(public)
 	file.InitRouter(public)
+	pdf.InitRouter(public)
 
 	return server
 }

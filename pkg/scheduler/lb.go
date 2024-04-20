@@ -38,20 +38,33 @@ func newrr() *rr {
 func (r *rr) Select(workers *sync.Map) Worker {
 	var selected Worker
 	workerCount := int64(0)
-	selectedIndex := r.idx.Add(1)
+	newIndex := r.idx.Add(1)
 
+	// 获取 workers 数量
 	workers.Range(func(key, value interface{}) bool {
 		workerCount++
-		if workerCount == selectedIndex {
-			selected = value.(Worker)
-			return false // 停止遍历
-		}
-		return true // 继续遍历
+		return true
 	})
 
-	if selected == nil && workerCount > 0 {
-		// 如果 selectedIndex 超出范围，从头开始
-		return r.Select(workers)
+	// 如果没有 workers 返回 nil
+	if workerCount == 0 {
+		return nil
 	}
+
+	// 确保 selectedIndex 在 workers 数量范围内
+	selectedIndex := newIndex % workerCount
+
+	workerCount = 0 // 重置计数器用于下一次遍历
+	workers.Range(func(key, value interface{}) bool {
+		if workerCount == selectedIndex {
+			// 断言 Worker 类型
+			selected = value.(Worker)
+			// 已找到，停止遍历
+			return false
+		}
+		workerCount++
+		return true
+	})
+
 	return selected
 }
