@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func InitRouter(public *gin.RouterGroup) {
@@ -32,7 +33,16 @@ func (cr *PdfRouter) SplitPdf(c *gin.Context) {
 	pages_per_file := c.Request.FormValue("pages_per_file")
 
 	path := "/home/xiaosi/tmp/"
-	err = c.SaveUploadedFile(file, path+file.Filename)
+	newfilename, err := uuid.NewUUID()
+	if err != nil {
+		c.JSON(500, gin.H{
+			"msg": err.Error(),
+		})
+		return
+	}
+
+	absServerPath := path + newfilename.String()
+	err = c.SaveUploadedFile(file, absServerPath)
 	if err != nil {
 		c.JSON(400, gin.H{
 			"msg": err.Error(),
@@ -48,7 +58,7 @@ func (cr *PdfRouter) SplitPdf(c *gin.Context) {
 		return
 	}
 
-	if dto, err := cr.pdfservice.SplitPdf(path+file.Filename, ipages_per_file); err != nil {
+	if dto, err := cr.pdfservice.SplitPdf(file.Filename, absServerPath, ipages_per_file); err != nil {
 		c.JSON(400, gin.H{
 			"msg": err.Error(),
 		})

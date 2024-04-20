@@ -3,7 +3,7 @@ package pdf
 import "go-web/pkg/scheduler"
 
 type PdfService interface {
-	SplitPdf(filepath string, pages_per_file int) (*PdfSumitTaskDto, error)
+	SplitPdf(filename string, filepath string, pages_per_file int) (*PdfSumitTaskDto, error)
 }
 
 type pdfservice struct {
@@ -11,10 +11,11 @@ type pdfservice struct {
 }
 
 type PdfSplitTask struct {
-	PagesPerFile int    `json:"pages_per_file"`
-	FilePath     string `json:"pdf_path"`
-	TaskType     string `json:"task_type"`
-	SubTaskType  string `json:"sub_task_type"`
+	PagesPerFile  int    `json:"pages_per_file"`
+	FilePath      string `json:"pdf_path"`
+	TaskType      string `json:"task_type"`
+	SubTaskType   string `json:"sub_task_type"`
+	FileOrginName string
 }
 
 func NewPdfService() PdfService {
@@ -23,12 +24,13 @@ func NewPdfService() PdfService {
 	}
 }
 
-func (p *pdfservice) SplitPdf(filepath string, pages_per_file int) (*PdfSumitTaskDto, error) {
+func (p *pdfservice) SplitPdf(filename, filepath string, pages_per_file int) (*PdfSumitTaskDto, error) {
 	pdfSplitTask := &PdfSplitTask{
-		FilePath:     filepath,
-		TaskType:     "pdf",
-		SubTaskType:  "splitter",
-		PagesPerFile: pages_per_file,
+		FilePath:      filepath,
+		TaskType:      "pdf",
+		SubTaskType:   "splitter",
+		PagesPerFile:  pages_per_file,
+		FileOrginName: filename,
 	}
 	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, pdfSplitTask)
 	_, err := p.scheduler.Schedule(task)
