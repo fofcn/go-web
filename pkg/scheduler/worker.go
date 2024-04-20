@@ -27,6 +27,7 @@ type Worker interface {
 	GetAddr() string
 	Exec(task Task) (TaskFuture, error)
 	CheckStatus() error
+	GetTaskStatus(taskId string) (*WorkerTaskResult, error)
 	Status() WorkerStatus
 	IncrErrorCounter() int32
 	ResetErrorCounter()
@@ -140,4 +141,18 @@ func (w *workimpl) CheckStatus() error {
 
 func (w *workimpl) GetAddr() string {
 	return w.addr
+}
+
+func (w *workimpl) GetTaskStatus(taskId string) (*WorkerTaskResult, error) {
+	resp, status, err := w.httpclient.Get("http://"+w.addr+"/task/"+taskId, nil)
+	if status == 200 && err == nil {
+		taskStatus := &WorkerTaskResult{}
+		err := json.Unmarshal(resp, taskStatus)
+		if err != nil {
+			return nil, err
+		}
+
+		return taskStatus, nil
+	}
+	return nil, errors.New("check task status error")
 }

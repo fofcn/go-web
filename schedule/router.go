@@ -60,11 +60,3 @@ func (sr *ScheduleRouter) DelWorker(c *gin.Context) {
 		"message": "ok",
 	})
 }
-
-type csvsplittask struct {
-	FilePath string `json:"filepath"`
-}
-
-func (sr *ScheduleRouter) submitTask(c *gin.Context) {
-
-}

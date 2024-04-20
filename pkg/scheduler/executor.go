@@ -9,6 +9,7 @@ type Executor interface {
 	Start() error
 	Stop() error
 	Execute(task Task) (TaskFuture, error)
+	GetTaskStatus(taskId string, workerId WorkerId) (*WorkerTaskResult, error)
 	HandleTaskCompletion(worker Worker, task Task, err error)
 }
 
@@ -47,9 +48,19 @@ func (s *defaultScheduler) Execute(task Task) (TaskFuture, error) {
 	if err != nil {
 		return nil, err
 	}
+	task.SetWorkerId(w.GetId())
 	return future, nil
 }
 
 func (s *defaultScheduler) HandleTaskCompletion(worker Worker, task Task, err error) {
 
+}
+
+func (s *defaultScheduler) GetTaskStatus(taskId string, workerId WorkerId) (*WorkerTaskResult, error) {
+	worker, err := s.wm.GetWorker(workerId)
+	if err != nil {
+		return nil, err
+	}
+
+	return worker.GetTaskStatus(taskId)
 }

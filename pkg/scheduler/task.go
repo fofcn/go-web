@@ -11,8 +11,8 @@ const (
 	TaskStateCreated TaskState = iota
 	TaskStateRunning
 	TaskStateDone
-	TaskStateCancelled
 	TaskStateFailure
+	TaskStateCancelled
 )
 
 type TaskType int
@@ -38,6 +38,8 @@ type Task interface {
 	GetCreatedAt() time.Time
 	GetPriority() TaskPriority
 	GetUserDef() interface{}
+	GetWorkerId() WorkerId
+	SetWorkerId(workerId WorkerId)
 	GetWorkerTaskId() string
 	SetWorkerTaskId(string)
 }
@@ -49,9 +51,22 @@ type TaskFuture interface {
 	Cancel() bool
 }
 
+type TaskResult struct {
+	TaskId int
+	Status TaskState
+	Data   interface{}
+}
+
+type WorkerTaskResult struct {
+	TaskId string
+	Status TaskState
+	Data   interface{}
+}
+
 type taskimpl struct {
 	id           int
 	workerTaskId string
+	workerId     WorkerId
 	state        TaskState
 	taskType     TaskType
 	createdAt    time.Time
@@ -120,6 +135,14 @@ func (t *taskimpl) GetPriority() TaskPriority {
 
 func (t *taskimpl) GetUserDef() interface{} {
 	return t.userdef
+}
+
+func (t *taskimpl) SetWorkerId(workerId WorkerId) {
+	t.workerId = workerId
+}
+
+func (t *taskimpl) GetWorkerId() WorkerId {
+	return t.workerId
 }
 
 func (t *taskfutureimpl) GetTask() Task {

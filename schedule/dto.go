@@ -4,3 +4,8 @@ type WorkerListDto struct {
 	Id   string `json:"id"`
 	Addr string `json:"addr"`
 }
+
+type TaskResultDto struct {
+	TaskId int
+	Data   interface{}
+}

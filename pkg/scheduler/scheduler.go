@@ -13,6 +13,7 @@ type Scheduler struct {
 	wm       *WorkerManager
 	started  atomic.Bool
 	executor Executor
+	store    TaskStore
 }
 
 var (
@@ -47,6 +48,7 @@ func NewScheduler(lbAlg string) (*Scheduler, error) {
 		started:  atomic.Bool{},
 		wm:       wm,
 		executor: executor,
+		store:    NewInMemStore(),
 	}, nil
 }
 
@@ -65,7 +67,13 @@ func (s *Scheduler) Start() error {
 }
 
 func (s *Scheduler) Schedule(task Task) (TaskFuture, error) {
-	return s.executor.Execute(task)
+	future, err := s.executor.Execute(task)
+	if err != nil {
+		return nil, err
+	}
+
+	s.store.AddTask(task)
+	return future, nil
 }
 
 func (s *Scheduler) Stop() error {
@@ -79,4 +87,22 @@ func (s *Scheduler) Stop() error {
 
 func (s *Scheduler) GetWorkers() []Worker {
 	return s.wm.GetWorkers()
+}
+
+func (s *Scheduler) GetTaskStatus(taskId int) (*TaskResult, error) {
+	task, err := s.store.GetTask(taskId)
+	if err != nil {
+		return nil, err
+	}
+
+	workerTaskResult, err := s.executor.GetTaskStatus(task.GetWorkerTaskId(), task.GetWorkerId())
+	if err != nil {
+		return nil, err
+	}
+
+	return &TaskResult{
+		TaskId: taskId,
+		Status: workerTaskResult.Status,
+		Data:   workerTaskResult.Data,
+	}, nil
 }

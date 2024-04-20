@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"errors"
 	"sync"
 	"time"
 )
@@ -49,6 +50,13 @@ func (ww *WorkerManager) GetWorkers() []Worker {
 
 func (ww *WorkerManager) SelectWorker() Worker {
 	return ww.lb.Select(ww.workers)
+}
+
+func (ww *WorkerManager) GetWorker(workerId WorkerId) (Worker, error) {
+	if worker, ok := ww.workers.Load(workerId); ok {
+		return worker.(Worker), nil
+	}
+	return nil, errors.New("no such worker registerd")
 }
 
 func (ww *WorkerManager) Close() {

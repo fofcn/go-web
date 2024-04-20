@@ -1,6 +1,7 @@
 package pdf
 
 import (
+	"go-web/pkg/scheduler"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -10,15 +11,18 @@ import (
 func InitRouter(public *gin.RouterGroup) {
 	pdfRouter := NewPdfRouter(NewPdfService())
 	public.POST("/pdf/split", pdfRouter.SplitPdf)
+	public.GET("/task/:id", pdfRouter.GetTaskResult)
 }
 
 type PdfRouter struct {
 	pdfservice PdfService
+	scheduler  *scheduler.Scheduler
 }
 
 func NewPdfRouter(pdfservice PdfService) *PdfRouter {
 	return &PdfRouter{
 		pdfservice: pdfservice,
+		scheduler:  scheduler.GetScheduler("rr"),
 	}
 }
 
@@ -67,4 +71,31 @@ func (cr *PdfRouter) SplitPdf(c *gin.Context) {
 		c.JSON(200, dto)
 	}
 
+}
+
+func (cr *PdfRouter) GetTaskResult(c *gin.Context) {
+	taskId := c.Param("id")
+	if len(taskId) == 0 {
+		c.JSON(400, gin.H{
+			"msg": "task id is empty",
+		})
+		return
+	}
+
+	iTaskId, err := strconv.Atoi(taskId)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"msg": err.Error(),
+		})
+		return
+	}
+
+	if dto, err := cr.scheduler.GetTaskStatus(iTaskId); err != nil {
+		c.JSON(400, gin.H{
+			"msg": err.Error(),
+		})
+		return
+	} else {
+		c.JSON(200, dto)
+	}
 }
