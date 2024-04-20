@@ -8,7 +8,7 @@ import (
 
 func InitRouter(public *gin.RouterGroup) {
 	pdfRouter := NewPdfRouter(NewPdfService())
-	public.POST("/pdf/split", pdfRouter.SplitCsv)
+	public.POST("/pdf/split", pdfRouter.SplitPdf)
 }
 
 type PdfRouter struct {
@@ -21,7 +21,7 @@ func NewPdfRouter(pdfservice PdfService) *PdfRouter {
 	}
 }
 
-func (cr *PdfRouter) SplitCsv(c *gin.Context) {
+func (cr *PdfRouter) SplitPdf(c *gin.Context) {
 	file, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -31,7 +31,7 @@ func (cr *PdfRouter) SplitCsv(c *gin.Context) {
 	}
 	pages_per_file := c.Request.FormValue("pages_per_file")
 
-	path := "./tmp/"
+	path := "/home/xiaosi/tmp/"
 	err = c.SaveUploadedFile(file, path+file.Filename)
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -48,14 +48,13 @@ func (cr *PdfRouter) SplitCsv(c *gin.Context) {
 		return
 	}
 
-	if err := cr.pdfservice.SplitPdf(path+file.Filename, ipages_per_file); err != nil {
+	if dto, err := cr.pdfservice.SplitPdf(path+file.Filename, ipages_per_file); err != nil {
 		c.JSON(400, gin.H{
 			"msg": err.Error(),
 		})
 		return
+	} else {
+		c.JSON(200, dto)
 	}
 
-	c.JSON(200, gin.H{
-		"msg": "ok",
-	})
 }

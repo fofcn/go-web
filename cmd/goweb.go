@@ -15,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
 )
@@ -69,6 +70,7 @@ func prepareServer() *http.Server {
 	}
 
 	public := r.Group("/")
+	public.Use(cors.Default())
 	index.InitRouter(public)
 	schedule.InitRouter(public)
 	file.InitRouter(public)

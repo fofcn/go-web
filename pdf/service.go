@@ -3,7 +3,7 @@ package pdf
 import "go-web/pkg/scheduler"
 
 type PdfService interface {
-	SplitPdf(filepath string, pages_per_file int) error
+	SplitPdf(filepath string, pages_per_file int) (*PdfSumitTaskDto, error)
 }
 
 type pdfservice struct {
@@ -23,7 +23,7 @@ func NewPdfService() PdfService {
 	}
 }
 
-func (p *pdfservice) SplitPdf(filepath string, pages_per_file int) error {
+func (p *pdfservice) SplitPdf(filepath string, pages_per_file int) (*PdfSumitTaskDto, error) {
 	pdfSplitTask := &PdfSplitTask{
 		FilePath:     filepath,
 		TaskType:     "pdf",
@@ -32,5 +32,11 @@ func (p *pdfservice) SplitPdf(filepath string, pages_per_file int) error {
 	}
 	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, pdfSplitTask)
 	_, err := p.scheduler.Schedule(task)
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	return &PdfSumitTaskDto{
+		TaskId: task.GetId(),
+	}, nil
 }

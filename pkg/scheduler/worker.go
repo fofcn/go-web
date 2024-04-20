@@ -63,6 +63,10 @@ func (w *workimpl) GetId() WorkerId {
 	return w.id
 }
 
+type TaskSubmitDto struct {
+	TaskId string `json:"task_id"`
+}
+
 func (w *workimpl) Exec(task Task) (TaskFuture, error) {
 	taskapi, exists := w.taskapitable[task.GetType()]
 	if exists {
@@ -78,8 +82,12 @@ func (w *workimpl) Exec(task Task) (TaskFuture, error) {
 		url := fmt.Sprintf("http://%s%s/%d", w.addr, taskapi, task.GetId())
 		resp, status, err := w.httpclient.Post(url, bytes.NewReader(taskjson), headers)
 		if status == 200 && err == nil {
-			println(string(resp))
-			json.Unmarshal(resp, task)
+			taskSubmitResponse := &TaskSubmitDto{}
+			err := json.Unmarshal(resp, taskSubmitResponse)
+			if err != nil {
+				return nil, err
+			}
+			task.SetWorkerTaskId(taskSubmitResponse.TaskId)
 			return NewTaskFuture(task), nil
 		} else {
 			return nil, errors.New("dispath task error")

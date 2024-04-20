@@ -38,6 +38,8 @@ type Task interface {
 	GetCreatedAt() time.Time
 	GetPriority() TaskPriority
 	GetUserDef() interface{}
+	GetWorkerTaskId() string
+	SetWorkerTaskId(string)
 }
 
 type TaskFuture interface {
@@ -48,12 +50,13 @@ type TaskFuture interface {
 }
 
 type taskimpl struct {
-	id        int
-	state     TaskState
-	taskType  TaskType
-	createdAt time.Time
-	priority  TaskPriority
-	userdef   interface{}
+	id           int
+	workerTaskId string
+	state        TaskState
+	taskType     TaskType
+	createdAt    time.Time
+	priority     TaskPriority
+	userdef      interface{}
 }
 
 type taskfutureimpl struct {
@@ -85,6 +88,14 @@ func NewTaskFuture(task Task) TaskFuture {
 		cancel: false,
 		err:    nil,
 	}
+}
+
+func (t *taskimpl) GetWorkerTaskId() string {
+	return t.workerTaskId
+}
+
+func (t *taskimpl) SetWorkerTaskId(id string) {
+	t.workerTaskId = id
 }
 
 func (t *taskimpl) GetId() int {
