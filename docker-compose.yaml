@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+
+  redis-master:
+    image: redis
+    container_name: redis-master
+    ports:
+      - "6379:6379"
+    networks:
+      - redis-network
+    command: redis-server --appendonly yes
+
+  redis-slave:
+    image: redis
+    container_name: redis-slave
+    ports:
+      - "6380:6379"
+    depends_on:
+      - redis-master
+    networks:
+      - redis-network
+    command: redis-server --slaveof redis-master 6379 --appendonly yes
+
+networks:
+  redis-network:
+    driver: bridge

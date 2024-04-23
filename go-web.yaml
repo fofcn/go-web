@@ -1,0 +1,19 @@
+
+redis:
+  clientName: go-web
+  mode: standalone
+  addrs:
+    - 127.0.0.1:6379
+  username: ""
+  password: ""
+  db: 0
+  maxRetries: 3
+  timeout: 10
+  pool: 
+    size: 10
+    maxIdle: 10
+    maxActive: 10
+    idleTimeout: 10
+    connMax
+  
+  
