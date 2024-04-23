@@ -28,12 +28,13 @@ func NewFileRouter() *FileRouter {
 		fmt.Println("Error:", err)
 		os.Exit(-1)
 	}
-	ossClient, err := oss.New("endpoint", "", "", oss.SetCredentialsProvider(&provider))
+
+	ossClient, err := oss.New(os.Getenv("OSS_ENDPOINT"), os.Getenv("OSS_ACCESS_KEY_ID"), os.Getenv("OSS_ACCESS_KEY_SECRET"), oss.SetCredentialsProvider(&provider), oss.UseCname(true))
 	if err != nil {
 		panic("create oss client error")
 	}
 
-	ossBucket, err := ossClient.Bucket("")
+	ossBucket, err := ossClient.Bucket(os.Getenv("OSS_BUCKET"))
 	if err != nil {
 		panic("check oss bucket error")
 	}
@@ -67,5 +68,19 @@ func (cr *FileRouter) createPresignedUrl(c *gin.Context) {
 }
 
 func (cr *FileRouter) getDownloadUrl(c *gin.Context) {
+	filename := c.Query("file_name")
+	if len(filename) == 0 {
+		c.JSON(400, gin.H{"error": "file_name is empty"})
+		return
+	}
 
+	signedURL, err := cr.ossBucket.SignURL(filename, oss.HTTPGet, 600000)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(200, OssDownloadUrlDto{
+		Url: signedURL,
+	})
 }

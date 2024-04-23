@@ -74,6 +74,7 @@ func prepareServer() *http.Server {
 	index.InitRouter(public)
 	schedule.InitRouter(public)
 	file.InitRouter(public)
+	file.InitRouterFile(public)
 	pdf.InitRouter(public)
 
 	return server
