@@ -102,7 +102,7 @@ func (s *Scheduler) GetTaskStatus(taskId int) (*TaskResult, error) {
 
 	return &TaskResult{
 		TaskId: taskId,
-		Status: workerTaskResult.Status,
+		Status: workerTaskResult.TaskStatus,
 		Data:   workerTaskResult.Data,
 	}, nil
 }

@@ -1,6 +1,9 @@
 package pdf
 
-import "go-web/pkg/scheduler"
+import (
+	"context"
+	"go-web/pkg/scheduler"
+)
 
 type PdfService interface {
 	SplitPdf(filename string, filepath string, pages_per_file int) (*PdfSumitTaskDto, error)
@@ -19,6 +22,7 @@ type PdfSplitTask struct {
 }
 
 func NewPdfService() PdfService {
+	context.Background()
 	return &pdfservice{
 		scheduler: scheduler.GetScheduler("rr"),
 	}

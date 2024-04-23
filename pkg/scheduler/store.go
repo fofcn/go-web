@@ -1,5 +1,7 @@
 package scheduler
 
+import "fmt"
+
 type TaskStore interface {
 	AddTask(task Task) error
 	GetTask(id int) (Task, error)
@@ -28,7 +30,11 @@ func (s *InMemStore) AddTask(task Task) error {
 }
 
 func (s *InMemStore) GetTask(id int) (Task, error) {
-	return s.tasks[id], nil
+	if task, exists := s.tasks[id]; exists {
+		return task, nil
+	}
+
+	return nil, fmt.Errorf("task not found, task id: %d", id)
 }
 
 func (s *InMemStore) DelTask(id int) error {

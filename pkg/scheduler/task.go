@@ -58,9 +58,9 @@ type TaskResult struct {
 }
 
 type WorkerTaskResult struct {
-	TaskId string
-	Status TaskState
-	Data   interface{}
+	TaskId     string      `json:"task_id"`
+	TaskStatus TaskState   `json:"task_status"`
+	Data       interface{} `json:"data"`
 }
 
 type taskimpl struct {

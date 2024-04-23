@@ -3,6 +3,7 @@ package pdf
 import (
 	"go-web/pkg/scheduler"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -96,6 +97,19 @@ func (cr *PdfRouter) GetTaskResult(c *gin.Context) {
 		})
 		return
 	} else {
+		if dto.Data != nil {
+			path, ok := dto.Data.(string)
+			if ok {
+				newPath := strings.Replace(path, "/home/xiaosi", "", 1)
+				newDto := &scheduler.TaskResult{
+					TaskId: dto.TaskId,
+					Status: dto.Status,
+					Data:   newPath,
+				}
+				c.JSON(200, newDto)
+				return
+			}
+		}
 		c.JSON(200, dto)
 	}
 }
