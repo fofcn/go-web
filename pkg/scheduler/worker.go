@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"go-web/pkg/http"
 	"sync/atomic"
+	"time"
 )
 
 type WorkerStatus struct {
 	IsHealthy      bool
+	LastPingTime   time.Time
 	ActiveTasks    int `json:"active_tasks"`
 	CompletedTasks int `json:"completed_tasks"`
 	FailedTasks    int `json:"failed_tasks"`

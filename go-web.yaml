@@ -1,19 +1,31 @@
 
-redis:
-  clientName: go-web
-  mode: standalone
-  addrs:
-    - 127.0.0.1:6379
-  username: ""
-  password: ""
-  db: 0
-  maxRetries: 3
-  timeout: 10
-  pool: 
-    size: 10
-    maxIdle: 10
-    maxActive: 10
-    idleTimeout: 10
-    connMax
+server:
+  addr: 0.0.0.0:8080
+  ginMode: debug
+  readTimeout: 5
+  writeTimeout: 5
+  maxHeaderBytes: 1048576000
+
+scheduler:
+  loadbalancer: rr
+  workerStore: redis
+  pingInterval: 5
+  evictThreshold: 3
+  redis:
+    clientName: go-web
+    mode: standalone
+    addrs:
+      - 127.0.0.1:6379
+    username: ""
+    password: ""
+    db: 0
+    maxRetries: 3
+    timeout: 10
+    pool: 
+      size: 10
+      maxIdle: 10
+      maxActive: 10
+      idleTimeout: 10
+    
   
   

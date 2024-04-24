@@ -2,12 +2,11 @@ package scheduler
 
 import (
 	"errors"
-	"sync"
 	"time"
 )
 
 type WorkerManager struct {
-	workers     *sync.Map
+	workers     WorkerStore
 	lb          LoadBalancer
 	timer       *time.Ticker
 	healthTimer *time.Ticker
@@ -17,7 +16,7 @@ type WorkerManager struct {
 func NewWorkerManager(lb LoadBalancer) *WorkerManager {
 	ww := &WorkerManager{
 		lb:          lb,
-		workers:     &sync.Map{},
+		workers:     NewRedisWorkerStore(nil),
 		timer:       time.NewTicker(5 * time.Second),
 		healthTimer: time.NewTicker(5 * time.Second),
 		done:        make(chan bool),

@@ -8,6 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	OSS_ENDPOINT          = "OSS_ENDPOINT"
+	OSS_ACCESS_KEY_ID     = "OSS_ACCESS_KEY_ID"
+	OSS_ACCESS_KEY_SECRET = "OSS_ACCESS_KEY_SECRET"
+	OSS_BUCKET            = "OSS_BUCKET"
+)
+
 func InitRouterFile(public *gin.RouterGroup) {
 	filerouter := NewFileRouter()
 	public.POST("/file", filerouter.createPresignedUrl)
@@ -29,12 +36,12 @@ func NewFileRouter() *FileRouter {
 		os.Exit(-1)
 	}
 
-	ossClient, err := oss.New(os.Getenv("OSS_ENDPOINT"), os.Getenv("OSS_ACCESS_KEY_ID"), os.Getenv("OSS_ACCESS_KEY_SECRET"), oss.SetCredentialsProvider(&provider), oss.UseCname(true))
+	ossClient, err := oss.New(os.Getenv(OSS_ENDPOINT), os.Getenv(OSS_ACCESS_KEY_ID), os.Getenv(OSS_ACCESS_KEY_SECRET), oss.SetCredentialsProvider(&provider), oss.UseCname(true))
 	if err != nil {
 		panic("create oss client error")
 	}
 
-	ossBucket, err := ossClient.Bucket(os.Getenv("OSS_BUCKET"))
+	ossBucket, err := ossClient.Bucket(os.Getenv(OSS_BUCKET))
 	if err != nil {
 		panic("check oss bucket error")
 	}
