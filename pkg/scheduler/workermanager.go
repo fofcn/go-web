@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"errors"
 	"time"
 )
 
@@ -30,32 +29,49 @@ func NewWorkerManager(lb LoadBalancer) *WorkerManager {
 }
 
 func (ww *WorkerManager) AddWorker(worker Worker) {
-	ww.workers.Store(worker.GetId(), worker)
+	ww.workers.AddWorker(worker)
 }
 
 func (ww *WorkerManager) DelWorker(id WorkerId) {
-	ww.workers.Delete(id)
+	ww.workers.DelWorker(id)
 }
 
 func (ww *WorkerManager) GetWorkers() []Worker {
-	var workers []Worker
-	ww.workers.Range(func(key, value any) bool {
-		workers = append(workers, value.(Worker))
-		return true
-	})
+	workerIds, err := ww.workers.GetWorkerIds()
+	if err != nil {
+		return nil
+	}
+
+	workers := make([]Worker, 0, len(workerIds))
+
+	for idx, workerId := range workerIds {
+		worker, err := ww.workers.GetWorker(workerId)
+		if err != nil {
+			continue
+		}
+		workers[idx] = worker
+	}
 
 	return workers
 }
 
 func (ww *WorkerManager) SelectWorker() Worker {
-	return ww.lb.Select(ww.workers)
+	workerIds, err := ww.workers.GetWorkerIds()
+	if err != nil {
+		return nil
+	}
+
+	workerId := ww.lb.Select(workerIds)
+	worker, err := ww.workers.GetWorker(workerId)
+	if err != nil {
+		return nil
+	}
+
+	return worker
 }
 
 func (ww *WorkerManager) GetWorker(workerId WorkerId) (Worker, error) {
-	if worker, ok := ww.workers.Load(workerId); ok {
-		return worker.(Worker), nil
-	}
-	return nil, errors.New("no such worker registerd")
+	return ww.workers.GetWorker(workerId)
 }
 
 func (ww *WorkerManager) Close() {
@@ -70,18 +86,10 @@ func (ww *WorkerManager) evictWorker() {
 			return
 		case <-ww.healthTimer.C:
 			println("health check timer")
-			ww.workers.Range(func(key, value any) bool {
-				worker := value.(Worker)
-				err := worker.CheckStatus()
-				if err != nil {
-					if worker.IncrErrorCounter() >= 3 {
-						ww.DelWorker(worker.GetId())
-					}
-				} else {
-					println(worker.Status().String())
-				}
-				return true
-			})
+			// get worker id list from worker store
+			// get worker last ping time from worker store
+			// if timeout then remove worker from worker store
+
 		}
 	}
 }

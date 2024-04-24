@@ -1,8 +1,9 @@
 package config
 
 type RedisStore struct {
-	ClientName  string `env:"SCHEDULER_REDIS_CLIENTNAME"`
-	ClusterMode string `env:"SCHEDULER_REDIS_CLUSTERMODE"`
+	ClientName  string   `env:"SCHEDULER_REDIS_CLIENTNAME"`
+	ClusterMode string   `env:"SCHEDULER_REDIS_CLUSTERMODE"`
+	Addrs       []string `env:"SCHEDULER_REDIS_ADDRS"`
 }
 
 type Config struct {

@@ -18,6 +18,7 @@ type WorkerStore interface {
 	GetWorker(id WorkerId) (Worker, error)
 	GetWorkerIds() ([]WorkerId, error)
 	Ping(id WorkerId) error
+	Close() error
 }
 
 type RedisConfig struct {
@@ -176,6 +177,10 @@ func (rws *RedisWorkerStore) Ping(id WorkerId) error {
 	return rws.client.Expire(ctx, fmt.Sprintf("%s%s", WORKER_INFO_KEY, id), 300*time.Second).Err()
 }
 
+func (rws *RedisWorkerStore) Close() error {
+	return rws.client.Close()
+}
+
 func (rws *InMemWorkerStore) AddWorker(worker Worker) error {
 
 	return nil
@@ -195,5 +200,9 @@ func (rws *InMemWorkerStore) GetWorkerIds() ([]WorkerId, error) {
 }
 
 func (rws *InMemWorkerStore) Ping(id WorkerId) error {
+	return nil
+}
+
+func (rws *InMemWorkerStore) Close() error {
 	return nil
 }
