@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"log"
 	"sync"
 	"time"
@@ -17,7 +18,7 @@ type WorkerStore interface {
 	DelWorker(id WorkerId) error
 	GetWorker(id WorkerId) (Worker, error)
 	GetWorkerIds() ([]WorkerId, error)
-	Ping(id WorkerId) error
+	Heartbeat(id WorkerId) error
 	Close() error
 }
 
@@ -89,7 +90,7 @@ func (rws *RedisWorkerStore) AddWorker(worker Worker) error {
 			return err
 		}
 	} else {
-		log.Printf("worker info already exists")
+		log.Printf("worker info already exists， %v", worker.GetId())
 		setted, err := rws.client.Expire(ctx, wokerInfoKey, 300*time.Second).Result()
 		if err != nil {
 			log.Fatalf("error on setting worker info: %v", err)
@@ -105,8 +106,19 @@ func (rws *RedisWorkerStore) AddWorker(worker Worker) error {
 	return nil
 }
 
+func (rws *RedisWorkerStore) hashString(s string) uint64 {
+	h := fnv.New64a()
+	h.Write([]byte(s))
+	return h.Sum64()
+}
+
 func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wokerInfoKey string) error {
-	pushed, err := rws.client.RPush(ctx, WORKER_LIST_KEY, string(worker.GetId())).Result()
+	var idHash uint64 = rws.hashString(string(worker.GetId()))
+	z := redis.Z{
+		Score:  float64(idHash),
+		Member: string(worker.GetId()),
+	}
+	pushed, err := rws.client.ZAdd(ctx, WORKER_LIST_KEY, z).Result()
 	if err != nil {
 		log.Fatalf("error on pushing elements to the list: %v", err)
 		return err
@@ -137,7 +149,7 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 func (rws *RedisWorkerStore) DelWorker(id WorkerId) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	rws.client.LRem(ctx, WORKER_LIST_KEY, 0, id)
+	rws.client.ZRem(ctx, WORKER_LIST_KEY, id)
 	rws.client.Del(ctx, WORKER_INFO_KEY+string(id))
 	return nil
 }
@@ -162,16 +174,25 @@ func (rws *RedisWorkerStore) GetWorkerIds() ([]WorkerId, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if rws.client.Exists(ctx, WORKER_LIST_KEY).Val() == 0 {
-		return nil, nil
-	} else if rws.client.Exists(ctx, WORKER_LIST_KEY).Val() == 1 {
-		return []WorkerId{WorkerId(rws.client.LIndex(ctx, WORKER_LIST_KEY, 0).Val())}, nil
+	cmd := rws.client.ZRange(ctx, WORKER_LIST_KEY, 0, -1)
+	if cmd.Err() != nil {
+		return nil, cmd.Err()
 	}
 
-	return nil, errors.New("no workers found")
+	workerIds, err := cmd.Result()
+	if err != nil {
+		return nil, err
+	}
+
+	var retWorkerIds = make([]WorkerId, len(workerIds))
+	for i, workerId := range workerIds {
+		retWorkerIds[i] = WorkerId(workerId)
+	}
+
+	return retWorkerIds, nil
 }
 
-func (rws *RedisWorkerStore) Ping(id WorkerId) error {
+func (rws *RedisWorkerStore) Heartbeat(id WorkerId) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	return rws.client.Expire(ctx, fmt.Sprintf("%s%s", WORKER_INFO_KEY, id), 300*time.Second).Err()
@@ -199,7 +220,7 @@ func (rws *InMemWorkerStore) GetWorkerIds() ([]WorkerId, error) {
 	return nil, nil
 }
 
-func (rws *InMemWorkerStore) Ping(id WorkerId) error {
+func (rws *InMemWorkerStore) Heartbeat(id WorkerId) error {
 	return nil
 }
 
