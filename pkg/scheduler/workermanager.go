@@ -12,10 +12,14 @@ type WorkerManager struct {
 	done        chan bool
 }
 
-func NewWorkerManager(lb LoadBalancer) *WorkerManager {
+type WorkerManagerCfg struct {
+	RedisConfig
+}
+
+func NewWorkerManager(lb LoadBalancer, wmCfg WorkerManagerCfg) *WorkerManager {
 	ww := &WorkerManager{
 		lb:          lb,
-		workers:     NewRedisWorkerStore(nil),
+		workers:     NewRedisWorkerStore(&wmCfg.RedisConfig),
 		timer:       time.NewTicker(5 * time.Second),
 		healthTimer: time.NewTicker(5 * time.Second),
 		done:        make(chan bool),

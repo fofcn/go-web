@@ -40,7 +40,12 @@ func NewScheduler(lbAlg string) (*Scheduler, error) {
 	if err != nil {
 		return nil, err
 	}
-	wm := NewWorkerManager(lb)
+
+	wmCfg := WorkerManagerCfg{RedisConfig: RedisConfig{
+		Addrs: []string{"127.0.0.1:6379"},
+	}}
+
+	wm := NewWorkerManager(lb, wmCfg)
 
 	executor := NewExecutor(wm)
 
