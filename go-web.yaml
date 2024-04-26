@@ -27,5 +27,8 @@ scheduler:
       maxActive: 10
       idleTimeout: 10
     
-  
-  
+aliyun:
+  oss:
+    accessKey: 123456
+    secretKey: 123456
+    endPoint: http://localhost:8080

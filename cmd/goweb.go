@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"go-web/file"
 	"go-web/index"
 	"go-web/pdf"
@@ -18,16 +19,25 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sethvargo/go-envconfig"
+	"github.com/spf13/viper"
 )
 
 func main() {
 	log.SetOutput(os.Stdout)
+
+	cfg, err := loadConfig()
+	if err != nil {
+		log.Println("load config error:", err)
+		return
+	}
 
 	ctx := context.Background()
 	if err := envconfig.Process(ctx, &config.ApplicationConfig); err != nil {
 		log.Println("proceesing env config error:", err)
 		return
 	}
+
+	log.Println(cfg.Server.Addr)
 
 	server := prepareServer()
 
@@ -45,6 +55,28 @@ func main() {
 		shutdownServer(server, ctx)
 	}
 
+}
+
+func loadConfig() (*config.Config, error) {
+	viper.SetConfigName("go-web.yaml")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
+	err := viper.ReadInConfig()
+	if err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+			return nil, errors.New("go-web.yaml cannot be found")
+		} else {
+			return nil, errors.New("parse config file error")
+		}
+	}
+
+	var cfg config.Config
+	err = viper.Unmarshal(&cfg)
+	if err != nil {
+		return nil, errors.New("parse config file error")
+	}
+	return &cfg, nil
 }
 
 func prepareServer() *http.Server {
