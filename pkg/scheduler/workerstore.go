@@ -18,7 +18,7 @@ type WorkerStore interface {
 	DelWorker(id WorkerId) error
 	GetWorker(id WorkerId) (Worker, error)
 	GetWorkerIds() ([]WorkerId, error)
-	Heartbeat(id WorkerId) error
+	Heartbeat(worker Worker) error
 	Close() error
 }
 
@@ -69,8 +69,11 @@ func NewRedisWorkerStore(cfg *RedisConfig) WorkerStore {
 }
 
 type RedisWorkerInfo struct {
-	Id   WorkerId `json:"id"`
-	Addr string   `json:"addr"`
+	Id           WorkerId  `json:"id"`
+	Addr         string    `json:"addr"`
+	LastPingTime time.Time `json:"last_ping_time"`
+	// not supported now
+	Abilities []string
 }
 
 func (rws *RedisWorkerStore) AddWorker(worker Worker) error {
@@ -127,8 +130,9 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 	log.Printf("Number of elements after pushed:%v \n", pushed)
 
 	workerInfo := &RedisWorkerInfo{
-		Id:   worker.GetId(),
-		Addr: worker.GetAddr(),
+		Id:           worker.GetId(),
+		Addr:         worker.GetAddr(),
+		LastPingTime: time.Now(),
 	}
 	workerJson, err := json.Marshal(workerInfo)
 	if err != nil {
@@ -192,10 +196,23 @@ func (rws *RedisWorkerStore) GetWorkerIds() ([]WorkerId, error) {
 	return retWorkerIds, nil
 }
 
-func (rws *RedisWorkerStore) Heartbeat(id WorkerId) error {
+func (rws *RedisWorkerStore) Heartbeat(worker Worker) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return rws.client.Expire(ctx, fmt.Sprintf("%s%s", WORKER_INFO_KEY, id), 300*time.Second).Err()
+	workerKey := fmt.Sprintf("%s%s", WORKER_INFO_KEY, string(worker.GetId()))
+	existed, err := rws.client.Exists(ctx, workerKey).Result()
+	if err != nil {
+		return errors.New("worker cannot be found")
+	}
+
+	if existed == 0 {
+		err = rws.doAddWorker(ctx, worker, workerKey)
+		if err != nil {
+			return err
+		}
+	}
+
+	return rws.client.Expire(ctx, workerKey, 300*time.Second).Err()
 }
 
 func (rws *RedisWorkerStore) Close() error {
@@ -220,7 +237,7 @@ func (rws *InMemWorkerStore) GetWorkerIds() ([]WorkerId, error) {
 	return nil, nil
 }
 
-func (rws *InMemWorkerStore) Heartbeat(id WorkerId) error {
+func (rws *InMemWorkerStore) Heartbeat(worker Worker) error {
 	return nil
 }
 

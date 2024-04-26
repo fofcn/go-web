@@ -12,7 +12,6 @@ import (
 
 type WorkerStatus struct {
 	IsHealthy      bool
-	LastPingTime   time.Time
 	ActiveTasks    int `json:"active_tasks"`
 	CompletedTasks int `json:"completed_tasks"`
 	FailedTasks    int `json:"failed_tasks"`
@@ -30,19 +29,29 @@ type Worker interface {
 	Exec(task Task) (TaskFuture, error)
 	CheckStatus() error
 	GetTaskStatus(taskId string) (*WorkerTaskResult, error)
+	GetLastHeartbeat() time.Time
+	Heartbeat(time.Time)
 	Status() WorkerStatus
 	IncrErrorCounter() int32
 	ResetErrorCounter()
+	// not support now
+	SetAbilities([]*WorkerAbility)
+	// not support now
+	GetAbilities() []*WorkerAbility
+}
+
+type WorkerAbility struct {
 }
 
 type workimpl struct {
-	addr         string
-	id           WorkerId
-	httpclient   http.HTTPClient
-	taskapitable map[TaskType]string
-	errCounter   atomic.Int32
-	isHealty     atomic.Bool
-	workerStatus *WorkerStatus
+	addr          string
+	id            WorkerId
+	httpclient    http.HTTPClient
+	taskapitable  map[TaskType]string
+	errCounter    atomic.Int32
+	isHealty      atomic.Bool
+	heartbeattime time.Time
+	workerStatus  *WorkerStatus
 }
 
 func NewWorker(id WorkerId, addr string) Worker {
@@ -157,4 +166,22 @@ func (w *workimpl) GetTaskStatus(taskId string) (*WorkerTaskResult, error) {
 		return taskStatus, nil
 	}
 	return nil, errors.New("check task status error")
+}
+
+func (w *workimpl) Heartbeat(ht time.Time) {
+	w.heartbeattime = ht
+}
+
+func (w *workimpl) GetLastHeartbeat() time.Time {
+	return w.heartbeattime
+}
+
+// not support now
+func (w *workimpl) SetAbilities([]*WorkerAbility) {
+
+}
+
+// not support now
+func (w *workimpl) GetAbilities() []*WorkerAbility {
+	return nil
 }

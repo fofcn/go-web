@@ -48,6 +48,6 @@ func TestGetWokrerIds_ShouldReturnWorkerIdList_WhenWorkerExisting(t *testing.T) 
 func TestHeartbeat_ShouldSuccess_WhenWorkerExisting(t *testing.T) {
 	store := scheduler.NewRedisWorkerStore(cfg)
 	store.AddWorker(scheduler.NewWorker("1", "127.0.0.1:8080"))
-	err := store.Heartbeat("1")
+	err := store.Heartbeat(scheduler.NewWorker("1", "127.0.0.1"))
 	assert.True(t, err == nil)
 }

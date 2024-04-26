@@ -74,6 +74,10 @@ func (ww *WorkerManager) GetWorker(workerId WorkerId) (Worker, error) {
 	return ww.workers.GetWorker(workerId)
 }
 
+func (ww *WorkerManager) Heartbeat(worker Worker) error {
+	return ww.workers.Heartbeat(worker)
+}
+
 func (ww *WorkerManager) Close() {
 	ww.timer.Stop()
 	ww.healthTimer.Stop()
@@ -87,6 +91,18 @@ func (ww *WorkerManager) evictWorker() {
 		case <-ww.healthTimer.C:
 			println("health check timer")
 			// get worker id list from worker store
+			if workerIds, err := ww.workers.GetWorkerIds(); err == nil {
+				for _, workerId := range workerIds {
+					if worker, err := ww.workers.GetWorker(workerId); err == nil {
+						if lastHeartbeatTime := worker.GetLastHeartbeat(); time.Since(lastHeartbeatTime) > time.Second*300 {
+							println("worker", workerId, "is not healthy, evict it")
+							if err := ww.workers.DelWorker(workerId); err != nil {
+								println("failed to delete worker", workerId, "from worker store")
+							}
+						}
+					}
+				}
+			}
 			// get worker last ping time from worker store
 			// if timeout then remove worker from worker store
 
