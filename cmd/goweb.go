@@ -110,9 +110,9 @@ func prepareServer() *http.Server {
 	public.Use(middleware.ConfigContext(), middleware.OptionalToken())
 	index.InitRouter(public)
 
-	private := r.Group("/")
+	private := public.Group("/")
 	private.Use(cors.Default())
-	private.Use(middleware.ConfigContext(), middleware.MustAuth())
+	private.Use(middleware.MustAuth())
 	schedule.InitRouter(private)
 	file.InitRouter(private)
 	file.InitRouterFile(private)

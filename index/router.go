@@ -1,6 +1,8 @@
 package index
 
 import (
+	"go-web/pkg/middleware"
+	"log"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -31,5 +33,7 @@ func NewIndexRouter(is IndexService) *IndexRouter {
 }
 
 func (i *IndexRouter) Index(c *gin.Context) {
+	claims := c.MustGet("claims").(*middleware.CustomClaims)
+	log.Println("claims: ", claims.UserId)
 	c.JSON(200, "Hello go-web")
 }
