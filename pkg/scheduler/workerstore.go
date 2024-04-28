@@ -59,13 +59,21 @@ func NewInMemWorkerStore() WorkerStore {
 	}
 }
 
-func NewRedisWorkerStore(cfg *RedisConfig) WorkerStore {
+func NewRedisWorkerStore(cfg *RedisConfig) (WorkerStore, error) {
 	client := redis.NewUniversalClient(&redis.UniversalOptions{
 		Addrs: []string{cfg.Addrs[0]},
 	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, err := client.Ping(ctx).Result()
+	if err != nil {
+		return nil, err
+	}
+
 	return &RedisWorkerStore{
 		client: client,
-	}
+	}, nil
 }
 
 type RedisWorkerInfo struct {
@@ -80,23 +88,29 @@ func (rws *RedisWorkerStore) AddWorker(worker Worker) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	_, err := rws.client.Ping(ctx).Result()
+	if err != nil {
+		log.Println("error on checking redis connection: %v", err)
+		return err
+	}
+
 	wokerInfoKey := WORKER_INFO_KEY + string(worker.GetId())
 	exists, err := rws.client.Exists(ctx, wokerInfoKey).Result()
 	if err != nil {
-		log.Fatalf("error on checking if worker info exists: %v", err)
+		log.Println("error on checking if worker info exists: %v", err)
 		return err
 	}
 	if exists == 0 {
 		err = rws.doAddWorker(ctx, worker, wokerInfoKey)
 		if err != nil {
-			log.Fatalf("error on adding worker info: %v", err)
+			log.Println("error on adding worker info: %v", err)
 			return err
 		}
 	} else {
 		log.Printf("worker info already exists， %v", worker.GetId())
 		setted, err := rws.client.Expire(ctx, wokerInfoKey, 300*time.Second).Result()
 		if err != nil {
-			log.Fatalf("error on setting worker info: %v", err)
+			log.Println("error on setting worker info: %v", err)
 			return err
 		}
 
@@ -123,7 +137,7 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 	}
 	pushed, err := rws.client.ZAdd(ctx, WORKER_LIST_KEY, z).Result()
 	if err != nil {
-		log.Fatalf("error on pushing elements to the list: %v", err)
+		log.Println("error on pushing elements to the list: %v", err)
 		return err
 	}
 
@@ -136,14 +150,14 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 	}
 	workerJson, err := json.Marshal(workerInfo)
 	if err != nil {
-		log.Fatalf("error on marshaling worker info: %v", err)
+		log.Println("error on marshaling worker info: %v", err)
 		return err
 	}
 	log.Printf("worker info: %v", string(workerJson))
 
 	err = rws.client.Set(ctx, wokerInfoKey, workerJson, 300*time.Second).Err()
 	if err != nil {
-		log.Fatalf("error on setting worker info: %v", err)
+		log.Println("error on setting worker info: %v", err)
 		return err
 	}
 
@@ -166,7 +180,7 @@ func (rws *RedisWorkerStore) GetWorker(id WorkerId) (Worker, error) {
 		var workerInfo RedisWorkerInfo
 		err := json.Unmarshal([]byte(stringCmd.Val()), &workerInfo)
 		if err != nil {
-			log.Fatalf("error on unmarshaling worker info: %v", err)
+			log.Println("error on unmarshaling worker info: %v", err)
 			return nil, err
 		}
 		return NewWorker(workerInfo.Id, workerInfo.Addr), nil

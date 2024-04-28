@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"log"
 	"time"
 )
 
@@ -17,9 +18,13 @@ type WorkerManagerCfg struct {
 }
 
 func NewWorkerManager(lb LoadBalancer, wmCfg WorkerManagerCfg) *WorkerManager {
+	store, err := NewRedisWorkerStore(&wmCfg.RedisConfig)
+	if err != nil {
+		log.Fatal("create worker store error.", err)
+	}
 	ww := &WorkerManager{
 		lb:          lb,
-		workers:     NewRedisWorkerStore(&wmCfg.RedisConfig),
+		workers:     store,
 		timer:       time.NewTicker(5 * time.Second),
 		healthTimer: time.NewTicker(5 * time.Second),
 		done:        make(chan bool),
@@ -98,10 +103,10 @@ func (ww *WorkerManager) evictWorker() {
 			if workerIds, err := ww.workers.GetWorkerIds(); err == nil {
 				for _, workerId := range workerIds {
 					if worker, err := ww.workers.GetWorker(workerId); err == nil {
-						if lastHeartbeatTime := worker.GetLastHeartbeat(); time.Since(lastHeartbeatTime) > time.Second*300 {
-							println("worker", workerId, "is not healthy, evict it")
+						if lastHeartbeatTime := worker.GetLastHeartbeat(); time.Duration(time.Since(lastHeartbeatTime).Seconds()) > time.Second*300 {
+							log.Println("worker", workerId, "is not healthy, evict it")
 							if err := ww.workers.DelWorker(workerId); err != nil {
-								println("failed to delete worker", workerId, "from worker store")
+								log.Println("failed to delete worker", workerId, "from worker store")
 							}
 						}
 					}

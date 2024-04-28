@@ -1,7 +1,6 @@
 package file
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/aliyun/aliyun-oss-go-sdk/oss"
@@ -32,8 +31,7 @@ func NewFileRouter() *FileRouter {
 	// 参考： https://help.aliyun.com/zh/oss/user-guide/authorized-third-party-upload?spm=a2c4g.11186623.0.0.996b6f4f8obfvf#261193c152gdf
 	provider, err := oss.NewEnvironmentVariableCredentialsProvider()
 	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(-1)
+		panic("oss new environment variable credentials provider error")
 	}
 
 	ossClient, err := oss.New(os.Getenv(OSS_ENDPOINT), os.Getenv(OSS_ACCESS_KEY_ID), os.Getenv(OSS_ACCESS_KEY_SECRET), oss.SetCredentialsProvider(&provider), oss.UseCname(true))
