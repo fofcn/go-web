@@ -7,6 +7,7 @@ import (
 	"go-web/index"
 	"go-web/pdf"
 	"go-web/pkg/config"
+	"go-web/pkg/middleware"
 	"go-web/pkg/router"
 	"go-web/schedule"
 	"log"
@@ -103,11 +104,16 @@ func prepareServer() *http.Server {
 
 	public := r.Group("/")
 	public.Use(cors.Default())
+
+	private := r.Group("/")
+	private.Use(cors.Default())
+	private.Use(middleware.Auth())
+
 	index.InitRouter(public)
-	schedule.InitRouter(public)
-	file.InitRouter(public)
-	file.InitRouterFile(public)
-	pdf.InitRouter(public)
+	schedule.InitRouter(private)
+	file.InitRouter(private)
+	file.InitRouterFile(private)
+	pdf.InitRouter(private)
 
 	return server
 }

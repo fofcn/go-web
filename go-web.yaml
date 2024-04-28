@@ -6,6 +6,14 @@ server:
   writeTimeout: 5
   maxHeaderBytes: 1048576000
 
+auth:
+  cookieName: go-web
+  maxAge: 36000000
+  path: /
+  domain: ""
+  security: true
+  httOnly: true
+
 scheduler:
   loadbalancer: rr
   workerStore: redis

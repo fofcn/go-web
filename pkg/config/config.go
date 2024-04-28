@@ -17,6 +17,15 @@ type RedisStore struct {
 	}
 }
 
+type Auth struct {
+	CookieName string
+	MaxAge     int
+	Path       string
+	Domain     string
+	Security   bool
+	HttpOnly   bool
+}
+
 type Scheduler struct {
 	LoadBalancer   string `env:"SCHEDULER_LOADBALANCER"`
 	WorkerStore    string `env:"SCHEDULER_WORKERSTORE"`
@@ -47,6 +56,7 @@ type Config struct {
 	Server    Server
 	Scheduler Scheduler
 	Aliyun    Aliyun
+	Auth      Auth
 }
 
 var ApplicationConfig Config
