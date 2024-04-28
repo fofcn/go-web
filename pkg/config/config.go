@@ -17,13 +17,25 @@ type RedisStore struct {
 	}
 }
 
+type Jwt struct {
+	Secret    string
+	ExpiresIn int
+	Issuer    string
+}
+
+type Cookie struct {
+	Name     string
+	MaxAge   int
+	Path     string
+	Domain   string
+	Security bool
+	HttpOnly bool
+}
+
 type Auth struct {
-	CookieName string
-	MaxAge     int
-	Path       string
-	Domain     string
-	Security   bool
-	HttpOnly   bool
+	Type   string
+	Cookie Cookie
+	Jwt    Jwt
 }
 
 type Scheduler struct {
@@ -59,7 +71,7 @@ type Config struct {
 	Auth      Auth
 }
 
-var ApplicationConfig Config
+var ApplicationConfig *Config = &Config{}
 
 func GetHttpServerConfig() *Server {
 	return &ApplicationConfig.Server
@@ -71,4 +83,8 @@ func GetAliyunOss() *Oss {
 
 func GetScheduler() *Scheduler {
 	return &ApplicationConfig.Scheduler
+}
+
+func GetAuthConfig() *Auth {
+	return &ApplicationConfig.Auth
 }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"go-web/auth"
 	"go-web/file"
 	"go-web/index"
 	"go-web/pdf"
@@ -32,8 +33,10 @@ func main() {
 		return
 	}
 
+	config.ApplicationConfig = cfg
+
 	ctx := context.Background()
-	if err := envconfig.Process(ctx, &config.ApplicationConfig); err != nil {
+	if err := envconfig.Process(ctx, config.ApplicationConfig); err != nil {
 		log.Println("proceesing env config error:", err)
 		return
 	}
@@ -104,15 +107,16 @@ func prepareServer() *http.Server {
 
 	public := r.Group("/")
 	public.Use(cors.Default())
+	public.Use(middleware.ConfigContext(), middleware.OptionalToken())
+	index.InitRouter(public)
 
 	private := r.Group("/")
 	private.Use(cors.Default())
-	private.Use(middleware.Auth())
-
-	index.InitRouter(public)
+	private.Use(middleware.ConfigContext(), middleware.MustAuth())
 	schedule.InitRouter(private)
 	file.InitRouter(private)
 	file.InitRouterFile(private)
+	auth.InitRouter(public)
 	pdf.InitRouter(private)
 
 	return server

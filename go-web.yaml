@@ -7,12 +7,18 @@ server:
   maxHeaderBytes: 1048576000
 
 auth:
-  cookieName: go-web
-  maxAge: 36000000
-  path: /
-  domain: ""
-  security: true
-  httOnly: true
+  type: Cookie
+  cookie:
+    name: Token
+    maxAge: 36000000
+    domain: localhost:8080
+    path: /
+    security: false
+    httpOnly: true
+  jwt:
+    secret: 123456
+    issuer: go-web
+    expiresIn: 36000000
 
 scheduler:
   loadbalancer: rr
