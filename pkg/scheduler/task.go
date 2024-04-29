@@ -52,7 +52,7 @@ type TaskFuture interface {
 }
 
 type TaskResult struct {
-	TaskId int
+	TaskId string
 	Status TaskState
 	Data   interface{}
 }

@@ -84,15 +84,7 @@ func (cr *PdfRouter) GetTaskResult(c *gin.Context) {
 		return
 	}
 
-	iTaskId, err := strconv.Atoi(taskId)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"msg": err.Error(),
-		})
-		return
-	}
-
-	if dto, err := cr.scheduler.GetTaskStatus(iTaskId); err != nil {
+	if dto, err := cr.scheduler.GetTaskStatus(taskId); err != nil {
 		c.JSON(400, gin.H{
 			"msg": err.Error(),
 		})

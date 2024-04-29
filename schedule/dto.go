@@ -6,6 +6,6 @@ type WorkerListDto struct {
 }
 
 type TaskResultDto struct {
-	TaskId int
+	TaskId string
 	Data   interface{}
 }

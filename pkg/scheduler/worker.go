@@ -55,9 +55,7 @@ type workimpl struct {
 }
 
 func NewWorker(id WorkerId, addr string) Worker {
-	table := map[TaskType]string{
-		TaskTypeCSVSplitter: "/task",
-	}
+	table := map[TaskType]string{}
 
 	worker := &workimpl{
 		id:           id,
@@ -80,30 +78,26 @@ type TaskSubmitDto struct {
 }
 
 func (w *workimpl) Exec(task Task) (TaskFuture, error) {
-	taskapi, exists := w.taskapitable[task.GetType()]
-	if exists {
-		taskjson, err := json.Marshal(task.GetUserDef())
+	taskjson, err := json.Marshal(task.GetUserDef())
+	if err != nil {
+		return nil, err
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+	url := fmt.Sprintf("http://%s%s/task", w.addr, task.GetId())
+	resp, status, err := w.httpclient.Post(url, bytes.NewReader(taskjson), headers)
+	if status == 200 && err == nil {
+		taskSubmitResponse := &TaskSubmitDto{}
+		err := json.Unmarshal(resp, taskSubmitResponse)
 		if err != nil {
 			return nil, err
 		}
-
-		println(w.addr + taskapi)
-		headers := map[string]string{
-			"Content-Type": "application/json",
-		}
-		url := fmt.Sprintf("http://%s%s/%d", w.addr, taskapi, task.GetId())
-		resp, status, err := w.httpclient.Post(url, bytes.NewReader(taskjson), headers)
-		if status == 200 && err == nil {
-			taskSubmitResponse := &TaskSubmitDto{}
-			err := json.Unmarshal(resp, taskSubmitResponse)
-			if err != nil {
-				return nil, err
-			}
-			task.SetWorkerTaskId(taskSubmitResponse.TaskId)
-			return NewTaskFuture(task), nil
-		} else {
-			return nil, errors.New("dispath task error")
-		}
+		task.SetWorkerTaskId(taskSubmitResponse.TaskId)
+		return NewTaskFuture(task), nil
+	} else {
+		return nil, errors.New("dispath task error")
 	}
 	return nil, errors.New("no api found")
 }

@@ -3,6 +3,7 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -79,12 +80,13 @@ func NewRedisTaskStore(redisCfg *RedisConfig) (*RedisTaskStore, error) {
 }
 
 type TaskRedisDto struct {
-	State    string      `json:"task_state"`
-	Type     string      `json:"type"`
-	SubType  string      `json:"sub_type"`
-	Priority int         `json:"priority"` // not supported for now
-	WorkerId string      `json:"worker_id"`
-	UserDef  interface{} `json:"user_def"`
+	State     string      `json:"task_state"`
+	Type      string      `json:"type"`
+	SubType   string      `json:"sub_type"`
+	Priority  int         `json:"priority"` // not supported for now
+	WorkerId  string      `json:"worker_id"`
+	CreatedAt time.Time   `json:"created_at"`
+	UserDef   interface{} `json:"user_def"`
 }
 
 func (s *RedisTaskStore) AddTask(task Task) error {
@@ -97,13 +99,13 @@ func (s *RedisTaskStore) AddTask(task Task) error {
 	}
 
 	taskDto := &TaskRedisDto{
-		State:    string(task.GetState()),
-		Type:     string(task.GetType()),
-		SubType:  string(task.GetSubType()),
-		Priority: int(task.GetPriority()),
-		WorkerId: string(task.GetWorkerId()),
-		UserDef:  task.GetUserDef(),
-		CreatedAt time.Time
+		State:     string(task.GetState()),
+		Type:      string(task.GetType()),
+		SubType:   string(task.GetSubType()),
+		Priority:  int(task.GetPriority()),
+		WorkerId:  string(task.GetWorkerId()),
+		UserDef:   task.GetUserDef(),
+		CreatedAt: task.GetCreatedAt(),
 	}
 
 	pushed, err := s.client.HSet(ctx, task.GetId(), taskDto).Result()
@@ -127,8 +129,21 @@ func (s *RedisTaskStore) GetTask(id string) (Task, error) {
 		return nil, err
 	}
 
+	priority, err := strconv.Atoi(taskDetail["priority"])
+	if err != nil {
+		return nil, err
+	}
 	taskBuilder := NewTaskBuilder()
-	task := TaskBuilder.
+	task := taskBuilder.
+		SetID(id).
+		SetWorkerTaskId(taskDetail["worker_task_id"]).
+		SetState(TaskState(taskDetail["task_state"])).
+		SetType(TaskType(taskDetail["type"])).
+		SetSubType(SubTaskType(taskDetail["sub_type"])).
+		SetPriority(TaskPriority(priority)).
+		SetWorkerId(WorkerId(taskDetail["worker_id"])).
+		SetUserDef(taskDetail["user_def"]).
+		Build()
 
 	return task, nil
 }

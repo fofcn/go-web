@@ -101,7 +101,7 @@ func (s *Scheduler) GetWorkers() []Worker {
 	return s.wm.GetWorkers()
 }
 
-func (s *Scheduler) GetTaskStatus(taskId int) (*TaskResult, error) {
+func (s *Scheduler) GetTaskStatus(taskId string) (*TaskResult, error) {
 	task, err := s.store.GetTask(taskId)
 	if err != nil {
 		return nil, err

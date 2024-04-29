@@ -25,7 +25,5 @@ func NewCsvService() CsvService {
 }
 
 func (c *csvservice) SplitCsv(filepath string) error {
-	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, CsvSplitTask{FilePath: filepath, TaskType: "1"})
-	_, err := c.scheduler.Schedule(task)
-	return err
+	return nil
 }

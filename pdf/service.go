@@ -30,20 +30,5 @@ func NewPdfService() PdfService {
 }
 
 func (p *pdfservice) SplitPdf(filename, filepath string, pages_per_file int) (*PdfSumitTaskDto, error) {
-	pdfSplitTask := &PdfSplitTask{
-		FilePath:      filepath,
-		TaskType:      "pdf",
-		SubTaskType:   "splitter",
-		PagesPerFile:  pages_per_file,
-		FileOrginName: filename,
-	}
-	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, pdfSplitTask)
-	_, err := p.scheduler.Schedule(task)
-	if err != nil {
-		return nil, err
-	}
-
-	return &PdfSumitTaskDto{
-		TaskId: task.GetId(),
-	}, nil
+	return nil, nil
 }

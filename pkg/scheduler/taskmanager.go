@@ -11,8 +11,12 @@ type TaskManager struct {
 
 func NewTaskManager(tmCfg TaskManagerConfig) *TaskManager {
 	var store TaskStore
+	var err error
 	if tmCfg.StoreType == "redis" {
-		store = NewRedisTaskStore(&tmCfg.RedisConfig)
+		store, err = NewRedisTaskStore(&tmCfg.RedisConfig)
+		if err != nil {
+			panic(err)
+		}
 	} else {
 		store = NewInMemStore()
 	}
@@ -25,10 +29,10 @@ func (tm *TaskManager) AddTask(task Task) error {
 	return tm.store.AddTask(task)
 }
 
-func (tm *TaskManager) GetTask(id int) (Task, error) {
+func (tm *TaskManager) GetTask(id string) (Task, error) {
 	return tm.store.GetTask(id)
 }
 
-func (tm *TaskManager) DelTask(id int) error {
+func (tm *TaskManager) DelTask(id string) error {
 	return tm.store.DelTask(id)
 }
