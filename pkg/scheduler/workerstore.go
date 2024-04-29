@@ -13,6 +13,13 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+const (
+	RedisClusterModeStandalone = "standalone"
+	RedisClusterModeCluster    = "cluster"
+	RedisClusterModeSentinel   = "sentinel"
+	RedisClusterModeFailover   = "failover"
+)
+
 type WorkerStore interface {
 	AddWorker(worker Worker) error
 	DelWorker(id WorkerId) error
@@ -60,9 +67,26 @@ func NewInMemWorkerStore() WorkerStore {
 }
 
 func NewRedisWorkerStore(cfg *RedisConfig) (WorkerStore, error) {
-	client := redis.NewUniversalClient(&redis.UniversalOptions{
-		Addrs: []string{cfg.Addrs[0]},
-	})
+	var client redis.UniversalClient
+	if cfg.ClusterMode == RedisClusterModeStandalone {
+		client = redis.NewClient(&redis.Options{
+			Addr:     cfg.Addrs[0],
+			Password: cfg.Password,
+			DB:       cfg.DB,
+		})
+	} else if cfg.ClusterMode == RedisClusterModeCluster {
+		client = redis.NewClusterClient(&redis.ClusterOptions{
+			Addrs:    cfg.Addrs,
+			Password: cfg.Password,
+		})
+	} else if cfg.ClusterMode == RedisClusterModeSentinel {
+		client = redis.NewFailoverClient(&redis.FailoverOptions{
+			MasterName:    cfg.Addrs[0],
+			SentinelAddrs: cfg.Addrs[1:],
+			Password:      cfg.Password,
+			DB:            cfg.DB,
+		})
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -90,27 +114,27 @@ func (rws *RedisWorkerStore) AddWorker(worker Worker) error {
 
 	_, err := rws.client.Ping(ctx).Result()
 	if err != nil {
-		log.Println("error on checking redis connection: %v", err)
+		log.Printf("error on checking redis connection: %v", err)
 		return err
 	}
 
 	wokerInfoKey := WORKER_INFO_KEY + string(worker.GetId())
 	exists, err := rws.client.Exists(ctx, wokerInfoKey).Result()
 	if err != nil {
-		log.Println("error on checking if worker info exists: %v", err)
+		log.Printf("error on checking if worker info exists: %v", err)
 		return err
 	}
 	if exists == 0 {
 		err = rws.doAddWorker(ctx, worker, wokerInfoKey)
 		if err != nil {
-			log.Println("error on adding worker info: %v", err)
+			log.Printf("error on adding worker info: %v", err)
 			return err
 		}
 	} else {
 		log.Printf("worker info already exists， %v", worker.GetId())
 		setted, err := rws.client.Expire(ctx, wokerInfoKey, 300*time.Second).Result()
 		if err != nil {
-			log.Println("error on setting worker info: %v", err)
+			log.Printf("error on setting worker info: %v", err)
 			return err
 		}
 
@@ -137,7 +161,7 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 	}
 	pushed, err := rws.client.ZAdd(ctx, WORKER_LIST_KEY, z).Result()
 	if err != nil {
-		log.Println("error on pushing elements to the list: %v", err)
+		log.Printf("error on pushing elements to the list: %v", err)
 		return err
 	}
 
@@ -150,14 +174,14 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 	}
 	workerJson, err := json.Marshal(workerInfo)
 	if err != nil {
-		log.Println("error on marshaling worker info: %v", err)
+		log.Printf("error on marshaling worker info: %v", err)
 		return err
 	}
 	log.Printf("worker info: %v", string(workerJson))
 
 	err = rws.client.Set(ctx, wokerInfoKey, workerJson, 300*time.Second).Err()
 	if err != nil {
-		log.Println("error on setting worker info: %v", err)
+		log.Printf("error on setting worker info: %v", err)
 		return err
 	}
 
@@ -180,7 +204,7 @@ func (rws *RedisWorkerStore) GetWorker(id WorkerId) (Worker, error) {
 		var workerInfo RedisWorkerInfo
 		err := json.Unmarshal([]byte(stringCmd.Val()), &workerInfo)
 		if err != nil {
-			log.Println("error on unmarshaling worker info: %v", err)
+			log.Printf("error on unmarshaling worker info: %v", err)
 			return nil, err
 		}
 		return NewWorker(workerInfo.Id, workerInfo.Addr), nil
