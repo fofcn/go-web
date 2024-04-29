@@ -1,13 +1,13 @@
 package scheduler
 
 import (
+	"go-web/pkg/config"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
-const (
-	defaultLBAlg = "rr"
-)
+const ()
 
 type Scheduler struct {
 	wm       *WorkerManager
@@ -21,13 +21,10 @@ var (
 	once      sync.Once
 )
 
-func GetScheduler(lbAlg string) *Scheduler {
+func GetScheduler(cfg *config.Scheduler) *Scheduler {
 	once.Do(func() {
 		var err error
-		if len(lbAlg) == 0 {
-			lbAlg = defaultLBAlg
-		}
-		scheduler, err = NewScheduler(lbAlg)
+		scheduler, err = NewScheduler(cfg)
 		if err != nil {
 			panic(err)
 		}
@@ -35,15 +32,25 @@ func GetScheduler(lbAlg string) *Scheduler {
 	return scheduler
 }
 
-func NewScheduler(lbAlg string) (*Scheduler, error) {
-	lb, err := NewLB(lbAlg)
+func NewScheduler(cfg *config.Scheduler) (*Scheduler, error) {
+	lb, err := NewLB(cfg.LoadBalancer)
 	if err != nil {
 		return nil, err
 	}
 
-	wmCfg := WorkerManagerCfg{RedisConfig: RedisConfig{
-		Addrs: []string{"127.0.0.1:6379"},
-	}}
+	redisCfg := RedisConfig{
+		ClusterMode:  cfg.Redis.ClusterMode,
+		Addrs:        cfg.Redis.Addrs,
+		DB:           cfg.Redis.DB,
+		ClientName:   cfg.Redis.ClientName,
+		MinIdleConns: cfg.Redis.Pool.MaxIdle,
+		MaxIdleConns: cfg.Redis.Pool.MaxActive,
+		MaxRetries:   cfg.Redis.MaxRetries,
+		PoolSize:     cfg.Redis.Pool.Size,
+		PoolTimeout:  time.Duration(cfg.Redis.Pool.IdleTimeout) * time.Second,
+		Password:     cfg.Redis.Password,
+	}
+	wmCfg := WorkerManagerCfg{RedisConfig: redisCfg}
 
 	wm := NewWorkerManager(lb, wmCfg)
 

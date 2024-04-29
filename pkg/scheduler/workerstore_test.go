@@ -27,6 +27,9 @@ func TestAddWorker_ShouldAddedSuccess_WhenConnectRedisSuccess(t *testing.T) {
 
 func TestAddWorker_ShouldUpdateExpiration_WhenTheWorkerExistsed(t *testing.T) {
 	store, err := scheduler.NewRedisWorkerStore(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	store.AddWorker(scheduler.NewWorker("1", "127.0.0.1:8080"))
 
 	err = store.AddWorker(scheduler.NewWorker("1", "127.0.0.1:8080"))
@@ -35,6 +38,9 @@ func TestAddWorker_ShouldUpdateExpiration_WhenTheWorkerExistsed(t *testing.T) {
 
 func TestDelWorker_ShouldSuccess_WhenTheWorkerExistsed(t *testing.T) {
 	store, err := scheduler.NewRedisWorkerStore(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	store.AddWorker(scheduler.NewWorker("1", "127.0.0.1:8080"))
 
 	err = store.DelWorker("1")
@@ -43,6 +49,9 @@ func TestDelWorker_ShouldSuccess_WhenTheWorkerExistsed(t *testing.T) {
 
 func TestGetWokrerIds_ShouldReturnWorkerIdList_WhenWorkerExisting(t *testing.T) {
 	store, err := scheduler.NewRedisWorkerStore(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	store.AddWorker(scheduler.NewWorker("1", "127.0.0.1:8080"))
 	ids, err := store.GetWorkerIds()
 	assert.True(t, err == nil)
@@ -51,6 +60,9 @@ func TestGetWokrerIds_ShouldReturnWorkerIdList_WhenWorkerExisting(t *testing.T) 
 
 func TestHeartbeat_ShouldSuccess_WhenWorkerExisting(t *testing.T) {
 	store, err := scheduler.NewRedisWorkerStore(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	store.AddWorker(scheduler.NewWorker("1", "127.0.0.1:8080"))
 	err = store.Heartbeat(scheduler.NewWorker("1", "127.0.0.1"))
 	assert.True(t, err == nil)

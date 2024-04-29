@@ -13,7 +13,7 @@ import (
 )
 
 func InitRouter(public *gin.RouterGroup) {
-	public.GET("/anony", Login)
+	public.POST("/anony", Login)
 }
 
 func Login(c *gin.Context) {

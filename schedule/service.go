@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"go-web/pkg/config"
 	"go-web/pkg/scheduler"
 )
 
@@ -16,7 +17,7 @@ type scheduleimpl struct {
 }
 
 func NewScheduleService() ScheduleService {
-	scheduler := scheduler.GetScheduler("rr")
+	scheduler := scheduler.GetScheduler(config.GetScheduler())
 	return &scheduleimpl{
 		scheduler: scheduler,
 	}

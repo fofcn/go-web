@@ -1,6 +1,9 @@
 package file
 
-import "go-web/pkg/scheduler"
+import (
+	"go-web/pkg/config"
+	"go-web/pkg/scheduler"
+)
 
 type CsvService interface {
 	SplitCsv(filepath string) error
@@ -17,7 +20,7 @@ type CsvSplitTask struct {
 
 func NewCsvService() CsvService {
 	return &csvservice{
-		scheduler: scheduler.GetScheduler("rr"),
+		scheduler: scheduler.GetScheduler(config.GetScheduler()),
 	}
 }
 

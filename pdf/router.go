@@ -1,6 +1,7 @@
 package pdf
 
 import (
+	"go-web/pkg/config"
 	"go-web/pkg/scheduler"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ type PdfRouter struct {
 func NewPdfRouter(pdfservice PdfService) *PdfRouter {
 	return &PdfRouter{
 		pdfservice: pdfservice,
-		scheduler:  scheduler.GetScheduler("rr"),
+		scheduler:  scheduler.GetScheduler(config.GetScheduler()),
 	}
 }
 

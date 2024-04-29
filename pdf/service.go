@@ -2,6 +2,7 @@ package pdf
 
 import (
 	"context"
+	"go-web/pkg/config"
 	"go-web/pkg/scheduler"
 )
 
@@ -24,7 +25,7 @@ type PdfSplitTask struct {
 func NewPdfService() PdfService {
 	context.Background()
 	return &pdfservice{
-		scheduler: scheduler.GetScheduler("rr"),
+		scheduler: scheduler.GetScheduler(config.GetScheduler()),
 	}
 }
 

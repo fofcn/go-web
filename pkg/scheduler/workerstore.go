@@ -132,7 +132,7 @@ func (rws *RedisWorkerStore) AddWorker(worker Worker) error {
 		}
 	} else {
 		log.Printf("worker info already exists， %v", worker.GetId())
-		setted, err := rws.client.Expire(ctx, wokerInfoKey, 300*time.Second).Result()
+		setted, err := rws.client.Expire(ctx, wokerInfoKey, 30000000*time.Second).Result()
 		if err != nil {
 			log.Printf("error on setting worker info: %v", err)
 			return err
@@ -179,7 +179,7 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 	}
 	log.Printf("worker info: %v", string(workerJson))
 
-	err = rws.client.Set(ctx, wokerInfoKey, workerJson, 300*time.Second).Err()
+	err = rws.client.Set(ctx, wokerInfoKey, workerJson, 30000000*time.Second).Err()
 	if err != nil {
 		log.Printf("error on setting worker info: %v", err)
 		return err
@@ -191,8 +191,12 @@ func (rws *RedisWorkerStore) doAddWorker(ctx context.Context, worker Worker, wok
 func (rws *RedisWorkerStore) DelWorker(id WorkerId) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	rws.client.ZRem(ctx, WORKER_LIST_KEY, id)
-	rws.client.Del(ctx, WORKER_INFO_KEY+string(id))
+	_, err := rws.client.ZRem(ctx, WORKER_LIST_KEY, string(id)).Result()
+	if err != nil {
+		log.Printf("error on deleting worker info: %v", err)
+		return err
+	}
+	_, _ = rws.client.Del(ctx, WORKER_INFO_KEY+string(id)).Result()
 	return nil
 }
 
