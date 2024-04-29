@@ -21,10 +21,13 @@ auth:
     expiresIn: 36000000
 
 scheduler:
-  loadbalancer: rr
-  workerStore: redis
-  pingInterval: 5
-  evictThreshold: 3
+  workerConfig:
+    loadbalancer: rr
+    workerStore: redis
+    pingInterval: 5
+    evictThreshold: 3
+  taskConfig:
+    storeType: redis
   redis:
     clientName: go-web
     clusterMode: standalone

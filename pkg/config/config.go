@@ -38,12 +38,21 @@ type Auth struct {
 	Jwt    Jwt
 }
 
-type Scheduler struct {
+type TaskConfig struct {
+	StoreType string
+}
+
+type WorkerConfig struct {
 	LoadBalancer   string `env:"SCHEDULER_LOADBALANCER"`
 	WorkerStore    string `env:"SCHEDULER_WORKERSTORE"`
 	PingInterval   int    `env:"SCHEDULER_PINGINTERVAL"`
 	EvictThreshold int    `env:"SCHEDULER_EVICT_THRESHOLD"`
-	Redis          RedisStore
+}
+
+type Scheduler struct {
+	WorkerConfig WorkerConfig
+	TaskConfig   TaskConfig
+	Redis        RedisStore
 }
 
 type Server struct {

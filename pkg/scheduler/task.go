@@ -1,27 +1,25 @@
 package scheduler
 
 import (
+	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-type TaskState int
+type TaskState string
 
 const (
-	TaskStateCreated TaskState = iota
-	TaskStateRunning
-	TaskStateDone
-	TaskStateFailure
-	TaskStateCancelled
+	TaskStateCreated   = "PENDING"
+	TaskStateRunning   = "RUNNING"
+	TaskStateDone      = "DONE"
+	TaskStateFailure   = "FAILURE"
+	TaskStateCancelled = "CANCELLED" // not support for now
 )
 
-type TaskType int
-
-const (
-	TaskTypeCSVSplitter TaskType = iota
-	TaskTypeB
-	TaskTypeC
-)
+type TaskType string
+type SubTaskType string
 
 type TaskPriority int
 
@@ -32,9 +30,11 @@ const (
 )
 
 type Task interface {
-	GetId() int
+	GetId() string
 	GetState() TaskState
 	GetType() TaskType
+	SetSubType() SubTaskType
+	GetSubType() SubTaskType
 	GetCreatedAt() time.Time
 	GetPriority() TaskPriority
 	GetUserDef() interface{}
@@ -64,11 +64,12 @@ type WorkerTaskResult struct {
 }
 
 type taskimpl struct {
-	id           int
+	id           string
 	workerTaskId string
 	workerId     WorkerId
 	state        TaskState
 	taskType     TaskType
+	subType      SubTaskType
 	createdAt    time.Time
 	priority     TaskPriority
 	userdef      interface{}
@@ -85,11 +86,12 @@ var (
 	taskIdAssigner = atomic.Int32{}
 )
 
-func NewTask(t TaskType, userdef interface{}) Task {
+func NewTask(t TaskType, sub SubTaskType, userdef interface{}) Task {
 	return &taskimpl{
-		id:        int(taskIdAssigner.Add(1)),
+		id:        strings.ReplaceAll(uuid.New().String(), "-", ""),
 		state:     TaskStateCreated,
 		taskType:  t,
+		subType:   sub,
 		createdAt: time.Now(),
 		priority:  TaskPriorityLow,
 		userdef:   userdef,
@@ -113,7 +115,7 @@ func (t *taskimpl) SetWorkerTaskId(id string) {
 	t.workerTaskId = id
 }
 
-func (t *taskimpl) GetId() int {
+func (t *taskimpl) GetId() string {
 	return t.id
 }
 
@@ -123,6 +125,14 @@ func (t *taskimpl) GetState() TaskState {
 
 func (t *taskimpl) GetType() TaskType {
 	return t.taskType
+}
+
+func (t *taskimpl) SetSubType() SubTaskType {
+	return t.subType
+}
+
+func (t *taskimpl) GetSubType() SubTaskType {
+	return t.subType
 }
 
 func (t *taskimpl) GetCreatedAt() time.Time {
@@ -159,4 +169,62 @@ func (t *taskfutureimpl) Done() bool {
 
 func (t *taskfutureimpl) Cancel() bool {
 	return false
+}
+
+type TaskBuilder struct {
+	task *taskimpl
+}
+
+func (b *TaskBuilder) SetID(id string) *TaskBuilder {
+	b.task.id = id
+	return b
+}
+
+func (b *TaskBuilder) SetWorkerTaskId(workerTaskId string) *TaskBuilder {
+	b.task.workerTaskId = workerTaskId
+	return b
+}
+
+func (b *TaskBuilder) SetWorkerId(workerId WorkerId) *TaskBuilder {
+	b.task.workerId = workerId
+	return b
+}
+
+func (b *TaskBuilder) SetState(state TaskState) *TaskBuilder {
+	b.task.state = state
+	return b
+}
+
+func (b *TaskBuilder) SetType(taskType TaskType) *TaskBuilder {
+	b.task.taskType = taskType
+	return b
+}
+
+func (b *TaskBuilder) SetSubType(subType SubTaskType) *TaskBuilder {
+	b.task.subType = subType
+	return b
+}
+
+func (b *TaskBuilder) SetPriority(priority TaskPriority) *TaskBuilder {
+	b.task.priority = priority
+	return b
+}
+
+func (b *TaskBuilder) SetUserDef(userDef interface{}) *TaskBuilder {
+	b.task.userdef = userDef
+	return b
+}
+
+func (b *TaskBuilder) SetCreatedAt(t time.Time) {
+	b.task.createdAt = t
+}
+
+func (b *TaskBuilder) Build() Task {
+	return b.task
+}
+
+func NewTaskBuilder() *TaskBuilder {
+	return &TaskBuilder{
+		task: &taskimpl{},
+	}
 }

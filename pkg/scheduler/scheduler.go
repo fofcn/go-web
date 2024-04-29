@@ -33,7 +33,7 @@ func GetScheduler(cfg *config.Scheduler) *Scheduler {
 }
 
 func NewScheduler(cfg *config.Scheduler) (*Scheduler, error) {
-	lb, err := NewLB(cfg.LoadBalancer)
+	lb, err := NewLB(cfg.WorkerConfig.LoadBalancer)
 	if err != nil {
 		return nil, err
 	}
