@@ -13,6 +13,7 @@ go build cmd/goweb.go
 
 3. 运行
 ```shell
+sudo docker-compose -f docker-compose.yml up -d
 ./goweb
 ```
 
