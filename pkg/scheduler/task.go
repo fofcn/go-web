@@ -52,9 +52,11 @@ type TaskFuture interface {
 }
 
 type TaskResult struct {
-	TaskId string
-	Status TaskState
-	Data   interface{}
+	TaskId  string
+	Type    string
+	SubType string
+	Status  TaskState
+	Data    interface{}
 }
 
 type WorkerTaskResult struct {
@@ -175,11 +177,6 @@ type TaskBuilder struct {
 	task *taskimpl
 }
 
-func (b *TaskBuilder) SetID(id string) *TaskBuilder {
-	b.task.id = id
-	return b
-}
-
 func (b *TaskBuilder) SetWorkerTaskId(workerTaskId string) *TaskBuilder {
 	b.task.workerTaskId = workerTaskId
 	return b
@@ -215,8 +212,9 @@ func (b *TaskBuilder) SetUserDef(userDef interface{}) *TaskBuilder {
 	return b
 }
 
-func (b *TaskBuilder) SetCreatedAt(t time.Time) {
+func (b *TaskBuilder) SetCreatedAt(t time.Time) *TaskBuilder {
 	b.task.createdAt = t
+	return b
 }
 
 func (b *TaskBuilder) Build() Task {
@@ -225,6 +223,10 @@ func (b *TaskBuilder) Build() Task {
 
 func NewTaskBuilder() *TaskBuilder {
 	return &TaskBuilder{
-		task: &taskimpl{},
+		task: &taskimpl{
+			id:       strings.ReplaceAll(uuid.New().String(), "-", ""),
+			state:    TaskStateCreated,
+			priority: TaskPriorityLow,
+		},
 	}
 }

@@ -3,6 +3,7 @@ package converter
 import (
 	"go-web/pkg/config"
 	"go-web/pkg/scheduler"
+	"time"
 )
 
 type ConverterService interface {
@@ -21,14 +22,25 @@ func NewConverterService() ConverterService {
 }
 
 func (c *converterServiceImpl) CreateConvertTask(cmd *CreationConvertCmd) (*CreationConvertDto, error) {
-	task := scheduler.NewTask(cmd.Type, cmd.SubType, cmd.FileId)
-	taskFuture, err := c.scheduler.Schedule(task)
+	taskUserDef := make(map[string]string)
+	taskUserDef["file_id"] = cmd.FileId
+	taskBuilder := scheduler.NewTaskBuilder()
+	task := taskBuilder.
+		SetType(scheduler.TaskType(cmd.Type)).
+		SetSubType(scheduler.SubTaskType(cmd.SubType)).
+		SetCreatedAt(time.Now()).
+		SetUserDef(taskUserDef).
+		Build()
+
+	_, err := c.scheduler.Schedule(task)
 	if err != nil {
 		return nil, err
 	}
-	taskResult, err := taskFuture.Get()
-	if err != nil {
-	}
+
+	return &CreationConvertDto{
+		TaskId: task.GetId(),
+	}, nil
+
 }
 
 func (c *converterServiceImpl) GetTaskStatus(cmd *ConverterStatusCmd) (*ConverterStatusDto, error) {
@@ -37,8 +49,9 @@ func (c *converterServiceImpl) GetTaskStatus(cmd *ConverterStatusCmd) (*Converte
 		return nil, err
 	}
 	return &ConverterStatusDto{
-		TaskId: taskResult.TaskId,
-		Status: taskResult.Status,
-		Type:   taskResult.Type,
-	}
+		TaskId:  taskResult.TaskId,
+		Status:  string(taskResult.Status),
+		Type:    taskResult.Type,
+		SubType: taskResult.SubType,
+	}, nil
 }

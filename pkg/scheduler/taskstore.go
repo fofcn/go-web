@@ -135,7 +135,6 @@ func (s *RedisTaskStore) GetTask(id string) (Task, error) {
 	}
 	taskBuilder := NewTaskBuilder()
 	task := taskBuilder.
-		SetID(id).
 		SetWorkerTaskId(taskDetail["worker_task_id"]).
 		SetState(TaskState(taskDetail["task_state"])).
 		SetType(TaskType(taskDetail["type"])).
