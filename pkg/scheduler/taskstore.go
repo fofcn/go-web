@@ -2,11 +2,15 @@ package scheduler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+)
+
+const (
+	RedisTaskKey = "ktools:task"
 )
 
 type TaskStore interface {
@@ -39,7 +43,7 @@ func (s *InMemStore) GetTask(id string) (Task, error) {
 		return task, nil
 	}
 
-	return nil, fmt.Errorf("task not found, task id: %d", id)
+	return nil, fmt.Errorf("task not found, task id: %s", id)
 }
 
 func (s *InMemStore) DelTask(id string) error {
@@ -108,7 +112,7 @@ func (s *RedisTaskStore) AddTask(task Task) error {
 		CreatedAt: task.GetCreatedAt(),
 	}
 
-	pushed, err := s.client.HSet(ctx, task.GetId(), taskDto).Result()
+	pushed, err := s.client.HSet(ctx, RedisTaskKey, task.GetId(), taskDto).Result()
 	if err != nil || pushed == 0 {
 		return err
 	}
@@ -124,29 +128,43 @@ func (s *RedisTaskStore) GetTask(id string) (Task, error) {
 		return nil, err
 	}
 
-	taskDetail, err := s.client.HGetAll(ctx, id).Result()
+	taskStr, err := s.client.HGet(ctx, RedisTaskKey, id).Result()
 	if err != nil {
 		return nil, err
 	}
 
-	priority, err := strconv.Atoi(taskDetail["priority"])
+	taskRedisDto := &TaskRedisDto{}
+	err = json.Unmarshal([]byte(taskStr), taskRedisDto)
 	if err != nil {
 		return nil, err
 	}
+
 	taskBuilder := NewTaskBuilder()
 	task := taskBuilder.
-		SetWorkerTaskId(taskDetail["worker_task_id"]).
-		SetState(TaskState(taskDetail["task_state"])).
-		SetType(TaskType(taskDetail["type"])).
-		SetSubType(SubTaskType(taskDetail["sub_type"])).
-		SetPriority(TaskPriority(priority)).
-		SetWorkerId(WorkerId(taskDetail["worker_id"])).
-		SetUserDef(taskDetail["user_def"]).
+		SetWorkerTaskId(taskRedisDto.WorkerId).
+		SetState(TaskState(taskRedisDto.State)).
+		SetType(TaskType(taskRedisDto.Type)).
+		SetSubType(SubTaskType(taskRedisDto.SubType)).
+		SetPriority(TaskPriority(taskRedisDto.Priority)).
+		SetWorkerId(WorkerId(taskRedisDto.WorkerId)).
+		SetUserDef(taskRedisDto.UserDef).
 		Build()
 
 	return task, nil
 }
 
 func (s *RedisTaskStore) DelTask(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	_, err := s.client.Ping(ctx).Result()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.client.HDel(ctx, RedisTaskKey, id).Result()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

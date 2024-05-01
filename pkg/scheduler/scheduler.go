@@ -79,12 +79,16 @@ func (s *Scheduler) Start() error {
 }
 
 func (s *Scheduler) Schedule(task Task) (TaskFuture, error) {
+	err := s.store.AddTask(task)
+	if err != nil {
+		return nil, err
+	}
+
 	future, err := s.executor.Execute(task)
 	if err != nil {
 		return nil, err
 	}
 
-	s.store.AddTask(task)
 	return future, nil
 }
 
@@ -110,6 +114,13 @@ func (s *Scheduler) GetTaskStatus(taskId string) (*TaskResult, error) {
 	workerTaskResult, err := s.executor.GetTaskStatus(task.GetWorkerTaskId(), task.GetWorkerId())
 	if err != nil {
 		return nil, err
+	}
+
+	// need to delete task from task store if task has reached its end state
+	if workerTaskResult.TaskStatus == TaskStateDone ||
+		workerTaskResult.TaskStatus == TaskStateFailure ||
+		workerTaskResult.TaskStatus == TaskStateCancelled {
+		s.store.DelTask(taskId)
 	}
 
 	return &TaskResult{

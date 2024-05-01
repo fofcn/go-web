@@ -97,3 +97,7 @@ func GetScheduler() *Scheduler {
 func GetAuthConfig() *Auth {
 	return &ApplicationConfig.Auth
 }
+
+func GetWorkerConfig() *WorkerConfig {
+	return &ApplicationConfig.Scheduler.WorkerConfig
+}
