@@ -129,3 +129,12 @@ func (s *Scheduler) GetTaskStatus(taskId string) (*TaskResult, error) {
 		Data:   workerTaskResult.Data,
 	}, nil
 }
+
+func (s *Scheduler) UpdateTaskState(taskId string, state string) error {
+	_, err := s.store.GetTask(taskId)
+	if err != nil {
+		return err
+	}
+
+	return s.store.UpdateTaskState(taskId, state)
+}

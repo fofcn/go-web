@@ -11,6 +11,7 @@ func InitRouter(public *gin.RouterGroup) {
 	public.POST("/schedule", indexRouter.RegisterWorker)
 	public.GET("/schedule", indexRouter.GetWorkerList)
 	public.DELETE("/schedule/:id", indexRouter.DelWorker)
+	public.PUT("/schedule/task/:id", indexRouter.UpdateTaskState)
 }
 
 type ScheduleRouter struct {
@@ -59,4 +60,25 @@ func (sr *ScheduleRouter) DelWorker(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "ok",
 	})
+}
+
+func (sr *ScheduleRouter) UpdateTaskState(c *gin.Context) {
+	id := c.Param("id")
+	if len(id) == 0 {
+		c.JSON(400, gin.H{
+			"message": "Invalid id",
+		})
+		return
+	}
+
+	var cmd TaskUpdateCmd
+	err := c.ShouldBindJSON(&cmd)
+	if err != nil {
+		c.JSON(400, gin.H{
+			"message": "Invalid cmd",
+		})
+		return
+	}
+
+	sr.ss.UpdateTaskState(id, cmd.TaskState)
 }

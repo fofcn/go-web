@@ -10,6 +10,7 @@ type ScheduleService interface {
 	GetWorkerList() []*WorkerListDto
 	DeRegisterWorker(id string) error
 	GetTaskStaus(taskid string) (*TaskResultDto, error)
+	UpdateTaskState(taskid string, state string) error
 }
 
 type scheduleimpl struct {
@@ -53,4 +54,8 @@ func (s *scheduleimpl) GetTaskStaus(taskId string) (*TaskResultDto, error) {
 	}
 
 	return &TaskResultDto{taskResult.TaskId, taskResult.Data}, nil
+}
+
+func (s *scheduleimpl) UpdateTaskState(taskId string, state string) error {
+	return s.scheduler.UpdateTaskState(taskId, state)
 }

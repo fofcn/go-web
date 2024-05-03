@@ -17,6 +17,7 @@ type TaskStore interface {
 	AddTask(task Task) error
 	GetTask(id string) (Task, error)
 	DelTask(id string) error
+	UpdateTaskState(taskId string, state string) error
 }
 
 type InMemStore struct {
@@ -48,6 +49,10 @@ func (s *InMemStore) GetTask(id string) (Task, error) {
 
 func (s *InMemStore) DelTask(id string) error {
 	delete(s.tasks, id)
+	return nil
+}
+
+func (s *InMemStore) UpdateTaskState(taskId string, state string) error {
 	return nil
 }
 func NewRedisTaskStore(redisCfg *RedisConfig) (*RedisTaskStore, error) {
@@ -90,6 +95,7 @@ type TaskRedisDto struct {
 	Priority  int         `json:"priority"` // not supported for now
 	WorkerId  string      `json:"worker_id"`
 	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
 	UserDef   interface{} `json:"user_def"`
 }
 
@@ -167,4 +173,28 @@ func (s *RedisTaskStore) DelTask(id string) error {
 	}
 
 	return nil
+}
+
+func (s *RedisTaskStore) UpdateTaskState(taskId string, state string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	_, err := s.client.Ping(ctx).Result()
+	if err != nil {
+		return err
+	}
+
+	taskStr, err := s.client.HGet(ctx, RedisTaskKey, taskId).Result()
+	if err != nil {
+		return err
+	}
+
+	taskRedisDto := &TaskRedisDto{}
+	err = json.Unmarshal([]byte(taskStr), taskRedisDto)
+	if err != nil {
+		return err
+	}
+
+	taskRedisDto.UpdatedAt = time.Now()
+
+	return s.client.HSet(ctx, RedisTaskKey, taskId, taskRedisDto).Err()
 }
