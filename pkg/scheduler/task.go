@@ -2,7 +2,6 @@ package scheduler
 
 import (
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -80,10 +79,6 @@ type taskfutureimpl struct {
 	cancel bool
 	err    error
 }
-
-var (
-	taskIdAssigner = atomic.Int32{}
-)
 
 func NewTask(t TaskType, sub SubTaskType, userdef interface{}) Task {
 	return &taskimpl{

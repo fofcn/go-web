@@ -6,11 +6,6 @@ import (
 	"testing"
 )
 
-type userdeftask struct {
-	path string
-	name string
-}
-
 func TestNewTask_ShouldSuccess_WhenGivenValidInput(t *testing.T) {
 	task := scheduler.NewTaskBuilder().Build()
 	bytes, err := json.Marshal(task)
