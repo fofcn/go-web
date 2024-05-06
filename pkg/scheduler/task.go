@@ -18,9 +18,6 @@ const (
 	TaskStateCancelled = "CANCELLED" // not support for now
 )
 
-type TaskType string
-type SubTaskType string
-
 type TaskPriority int
 
 const (

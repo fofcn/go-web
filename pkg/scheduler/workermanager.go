@@ -40,11 +40,11 @@ func NewWorkerManager(lb LoadBalancer, wmCfg WorkerManagerCfg) *WorkerManager {
 func (ww *WorkerManager) AddWorker(worker Worker) {
 	err := ww.workers.AddWorker(worker)
 	if err != nil {
-		log.Printf("add worker error.", err)
+		log.Printf("add worker error %v.", err)
 	}
 	err = ww.workers.Heartbeat(worker)
 	if err != nil {
-		log.Printf("add worker error.", err)
+		log.Printf("add worker error %v.", err)
 	}
 }
 

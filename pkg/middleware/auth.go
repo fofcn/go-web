@@ -31,9 +31,10 @@ func InitMiddleware(r *gin.Engine) {
 func MustAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookieCfg := c.MustGet("CookieCfg").(config.Cookie)
+		jwtCfg := c.MustGet("JwtCfg").(config.Jwt)
 		tokenStr, err := c.Cookie(cookieCfg.Name)
 		if len(tokenStr) == 0 || err != nil {
-			global.AuthError(c, global.NewEntity("", "token is empty", nil))
+			global.AuthError(c, global.NewEntity("", "Unauthorized operation", nil))
 			return
 		}
 
@@ -41,10 +42,10 @@ func MustAuth() gin.HandlerFunc {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
-			return []byte("secret"), nil
+			return []byte(jwtCfg.Secret), nil
 		})
 		if err != nil {
-			global.AuthError(c, global.NewEntity("", "token is invalid", nil))
+			global.AuthError(c, global.NewEntity("", "Unauthorized operation", nil))
 			return
 		}
 

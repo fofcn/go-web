@@ -86,6 +86,10 @@ func (s *Scheduler) Schedule(task Task) (TaskFuture, error) {
 
 	future, err := s.executor.Execute(task)
 	if err != nil {
+		delErr := s.store.DelTask(task.GetId())
+		if delErr != nil {
+			return nil, delErr
+		}
 		return nil, err
 	}
 

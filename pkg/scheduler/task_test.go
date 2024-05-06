@@ -12,10 +12,7 @@ type userdeftask struct {
 }
 
 func TestNewTask_ShouldSuccess_WhenGivenValidInput(t *testing.T) {
-	task := scheduler.NewTask(scheduler.TaskTypeCSVSplitter, &userdeftask{
-		path: "/test",
-		name: "test",
-	})
+	task := scheduler.NewTaskBuilder().Build()
 	bytes, err := json.Marshal(task)
 	if err != nil {
 		t.Fatal(err)

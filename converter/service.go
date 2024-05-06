@@ -22,14 +22,16 @@ func NewConverterService() ConverterService {
 }
 
 func (c *converterServiceImpl) CreateConvertTask(cmd *CreationConvertCmd) (*CreationConvertDto, error) {
-	taskUserDef := make(map[string]string)
-	taskUserDef["file_id"] = cmd.FileId
-	taskBuilder := scheduler.NewTaskBuilder()
-	task := taskBuilder.
+	isValidTask := scheduler.IsValidTask(scheduler.TaskType(cmd.Type), scheduler.SubTaskType(cmd.SubType))
+	if !isValidTask {
+		return nil, scheduler.ErrInvalidTask
+	}
+
+	task := scheduler.NewTaskBuilder().
 		SetType(scheduler.TaskType(cmd.Type)).
 		SetSubType(scheduler.SubTaskType(cmd.SubType)).
 		SetCreatedAt(time.Now()).
-		SetUserDef(taskUserDef).
+		SetUserDef(cmd.Params).
 		Build()
 
 	_, err := c.scheduler.Schedule(task)

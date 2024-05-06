@@ -8,9 +8,9 @@ import (
 
 func InitRouter(public *gin.RouterGroup) {
 	indexRouter := NewScheduleRouter(NewScheduleService())
-	public.POST("/schedule", indexRouter.RegisterWorker)
-	public.GET("/schedule", indexRouter.GetWorkerList)
-	public.DELETE("/schedule/:id", indexRouter.DelWorker)
+	public.POST("/schedule/worker", indexRouter.RegisterWorker)
+	public.GET("/schedule/worker", indexRouter.GetWorkerList)
+	public.DELETE("/schedule/worker/:id", indexRouter.DelWorker)
 	public.PUT("/schedule/task/:id", indexRouter.UpdateTaskState)
 }
 

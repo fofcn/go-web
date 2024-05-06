@@ -1,6 +1,10 @@
 package global
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 type HttpEntity struct {
 	ErrCode string `json:"err_code"`
@@ -17,20 +21,25 @@ func NewEntity(code, msg string, data any) *HttpEntity {
 }
 
 func Success(c *gin.Context, entity *HttpEntity) {
-	c.JSON(200, entity)
+	c.JSON(http.StatusOK, entity)
 }
 
 func Error(c *gin.Context, entity *HttpEntity) {
-	c.JSON(500, entity)
+	c.JSON(http.StatusInternalServerError, entity)
 	c.Abort()
 }
 
 func AuthError(c *gin.Context, entity *HttpEntity) {
-	c.JSON(401, entity)
+	c.JSON(http.StatusUnauthorized, entity)
 	c.Abort()
 }
 
 func RequestError(c *gin.Context, entity *HttpEntity) {
-	c.JSON(400, entity)
+	c.JSON(http.StatusBadRequest, entity)
+	c.Abort()
+}
+
+func InternalServerError(c *gin.Context, entity *HttpEntity) {
+	c.JSON(http.StatusInternalServerError, entity)
 	c.Abort()
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"go-web/auth"
+	"go-web/converter"
 	"go-web/file"
 	"go-web/index"
 	"go-web/pdf"
@@ -118,6 +119,7 @@ func prepareServer() *http.Server {
 	private.Use(middleware.MustAuth())
 	file.InitRouter(private)
 	file.InitRouterFile(private)
+	converter.InitRouter(private)
 
 	return server
 }
