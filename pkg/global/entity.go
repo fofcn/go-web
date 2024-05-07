@@ -20,6 +20,14 @@ func NewEntity(code, msg string, data any) *HttpEntity {
 	}
 }
 
+func SuccessWithData(c *gin.Context, data any) {
+	c.JSON(http.StatusOK, NewEntity("0", "ok", data))
+}
+
+func SuccessNoData(c *gin.Context) {
+	c.JSON(http.StatusOK, NewEntity("0", "ok", nil))
+}
+
 func Success(c *gin.Context, entity *HttpEntity) {
 	c.JSON(http.StatusOK, entity)
 }

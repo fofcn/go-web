@@ -36,7 +36,7 @@ func (cr *ConverterRouter) createConvertTask(c *gin.Context) {
 		return
 	}
 
-	global.Success(c, global.NewEntity("success", "", dto))
+	global.SuccessWithData(c, dto)
 }
 
 func (cr *ConverterRouter) getTaskStatus(c *gin.Context) {
@@ -54,5 +54,5 @@ func (cr *ConverterRouter) getTaskStatus(c *gin.Context) {
 		return
 	}
 
-	global.Success(c, global.NewEntity("success", "", dto))
+	global.SuccessWithData(c, dto)
 }
