@@ -60,12 +60,12 @@ func (ww *WorkerManager) GetWorkers() []Worker {
 
 	workers := make([]Worker, 0, len(workerIds))
 
-	for idx, workerId := range workerIds {
+	for _, workerId := range workerIds {
 		worker, err := ww.workers.GetWorker(workerId)
 		if err != nil {
 			continue
 		}
-		workers[idx] = worker
+		workers = append(workers, worker)
 	}
 
 	return workers

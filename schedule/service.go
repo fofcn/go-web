@@ -3,6 +3,8 @@ package schedule
 import (
 	"go-web/pkg/config"
 	"go-web/pkg/scheduler"
+	"net/url"
+	"strconv"
 )
 
 type ScheduleService interface {
@@ -25,8 +27,31 @@ func NewScheduleService() ScheduleService {
 }
 
 func (s *scheduleimpl) RegisterWorker(workerId scheduler.WorkerId, addr string) error {
+	if !s.isValidUrl(addr) {
+		return ErrInvalidWorkerAddress
+	}
 	_ = s.scheduler.RegisterWorker(scheduler.NewWorker(workerId, addr))
 	return nil
+}
+
+func (s *scheduleimpl) isValidUrl(urlStr string) bool {
+	u, err := url.Parse(urlStr)
+	if err != nil {
+		return false
+	}
+
+	host := u.Hostname()
+	port := u.Port()
+	if host == "" || port == "" {
+		return false
+	}
+
+	p, err := strconv.Atoi(port)
+	if err != nil {
+		return false
+	}
+
+	return p >= 0 && p <= 65535
 }
 
 func (s *scheduleimpl) GetWorkerList() []*WorkerListDto {

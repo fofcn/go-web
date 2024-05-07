@@ -77,8 +77,20 @@ type TaskSubmitDto struct {
 	TaskId string `json:"task_id"`
 }
 
+type taskdispath struct {
+	TaskId      string      `json:"task_id"`
+	TaskType    string      `json:"task_type"`
+	TaskSubType string      `json:"task_sub_type"`
+	TaskDetail  interface{} `json:"task_detail"`
+}
+
 func (w *workimpl) Exec(task Task) (TaskFuture, error) {
-	taskjson, err := json.Marshal(task.GetUserDef())
+	task_dispath := &taskdispath{TaskId: task.GetId(),
+		TaskType:    string(task.GetType()),
+		TaskSubType: string(task.GetSubType()),
+		TaskDetail:  task.GetUserDef(),
+	}
+	taskjson, err := json.Marshal(task_dispath)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +98,7 @@ func (w *workimpl) Exec(task Task) (TaskFuture, error) {
 	headers := map[string]string{
 		"Content-Type": "application/json",
 	}
-	url := fmt.Sprintf("http://%s%s/task", w.addr, task.GetId())
+	url := fmt.Sprintf("http://%s/task", w.addr)
 	resp, status, err := w.httpclient.Post(url, bytes.NewReader(taskjson), headers)
 	if status == 200 && err == nil {
 		taskSubmitResponse := &TaskSubmitDto{}

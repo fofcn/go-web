@@ -1,6 +1,7 @@
 package schedule
 
 import (
+	"errors"
 	"go-web/pkg/global"
 	"go-web/pkg/scheduler"
 
@@ -33,7 +34,15 @@ func (sr *ScheduleRouter) RegisterWorker(c *gin.Context) {
 		return
 	}
 
-	_ = sr.ss.RegisterWorker(scheduler.WorkerId(cmd.Id), cmd.Addr)
+	err = sr.ss.RegisterWorker(scheduler.WorkerId(cmd.Id), cmd.Addr)
+	if err != nil {
+		if errors.Is(err, ErrInvalidWorkerAddress) {
+			global.RequestError(c, global.NewEntity("", err.Error(), nil))
+			return
+		}
+		global.RequestError(c, global.NewEntity("", err.Error(), nil))
+		return
+	}
 
 	global.SuccessNoData(c)
 }
