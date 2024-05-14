@@ -106,8 +106,17 @@ func prepareServer() *http.Server {
 		MaxHeaderBytes: config.GetHttpServerConfig().MaxHeaderBytes,
 	}
 
+	corsCfg := cors.Config{
+		AllowAllOrigins: true,
+		// AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Cookie"},
+		AllowCredentials: false,
+		MaxAge:           12 * time.Hour,
+	}
+
 	public := r.Group("/")
-	public.Use(cors.Default())
+	public.Use(cors.New(corsCfg))
 	public.Use(middleware.ConfigContext(), middleware.OptionalToken())
 	index.InitRouter(public)
 	schedule.InitRouter(public)
@@ -115,7 +124,7 @@ func prepareServer() *http.Server {
 	pdf.InitRouter(public)
 
 	private := public.Group("/")
-	private.Use(cors.Default())
+	private.Use(cors.New(corsCfg))
 	private.Use(middleware.MustAuth())
 	file.InitRouter(private)
 	file.InitRouterFile(private)

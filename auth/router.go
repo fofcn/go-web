@@ -4,6 +4,7 @@ import (
 	"go-web/pkg/config"
 	"go-web/pkg/global"
 	"go-web/pkg/middleware"
+	"net/http"
 	"strings"
 	"time"
 
@@ -34,6 +35,7 @@ func Login(c *gin.Context) {
 
 func setCookieToken(c *gin.Context, token string) {
 	cookieCfg := c.MustGet("CookieCfg").(config.Cookie)
+	c.SetSameSite(http.SameSiteNoneMode)
 	c.SetCookie(cookieCfg.Name, token, cookieCfg.MaxAge, cookieCfg.Path, cookieCfg.Domain, cookieCfg.Security, cookieCfg.HttpOnly)
 }
 

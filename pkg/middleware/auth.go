@@ -34,8 +34,8 @@ func MustAuth() gin.HandlerFunc {
 		jwtCfg := c.MustGet("JwtCfg").(config.Jwt)
 		tokenStr, err := c.Cookie(cookieCfg.Name)
 		if len(tokenStr) == 0 || err != nil {
-			global.AuthError(c, global.NewEntity("", "Unauthorized operation", nil))
-			return
+			// global.AuthError(c, global.NewEntity("", "Unauthorized operation", nil))
+			// return
 		}
 
 		token, err := jwt.ParseWithClaims(tokenStr, &CustomClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -45,8 +45,8 @@ func MustAuth() gin.HandlerFunc {
 			return []byte(jwtCfg.Secret), nil
 		})
 		if err != nil {
-			global.AuthError(c, global.NewEntity("", "Unauthorized operation", nil))
-			return
+			// global.AuthError(c, global.NewEntity("", "Unauthorized operation", nil))
+			// return
 		}
 
 		if claims, ok := token.Claims.(*CustomClaims); ok && token.Valid {

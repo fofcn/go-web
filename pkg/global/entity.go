@@ -47,6 +47,11 @@ func RequestError(c *gin.Context, entity *HttpEntity) {
 	c.Abort()
 }
 
+func InteralServerErrorWithMsg(c *gin.Context, msg string) {
+	c.JSON(http.StatusInternalServerError, NewEntity("500", msg, nil))
+	c.Abort()
+}
+
 func InternalServerError(c *gin.Context, entity *HttpEntity) {
 	c.JSON(http.StatusInternalServerError, entity)
 	c.Abort()
